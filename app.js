@@ -1,4 +1,5 @@
 const express = require("express");
+const admin = require("./configs/firebase_admin.config");
 const app = express();
 const port = 3000;
 

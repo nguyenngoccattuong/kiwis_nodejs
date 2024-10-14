@@ -97,20 +97,15 @@ class AuthController extends Controller {
 
   async checkToken() {
     try {
-      const auth = this.req.header("authorization");
-      if (!auth) {
+      const auth = this.req.headers.authorization;
+      if (!auth || !authHeader.startsWith('Bearer ')) {
         return this.response(401, "Vui lòng nhập Token");
       }
 
-      const token = auth.split(" ")[1];
-      const decoded = jwt.verify(token, secret);
-      const userId = decoded.data.id;
+      const token = auth.split("Bearer ")[1];
+      const decodedToken = await admin.auth().verifyIdToken(token);
 
-      const tokenModel = new TokenModel();
-
-      const tokenStatus = await tokenModel.findStatus(1, userId);
-
-      if (!tokenStatus || tokenStatus.length === 0) {
+      if (!decodedToken || decodedToken === 0) {
         return this.response(403, "Token không hợp lệ hoặc đã hết hạn.");
       }
       return this.next();
