@@ -1,0 +1,287 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  password           String
+  bio                String?
+  isPublic           Boolean            @default(false)
+  isAdmin            Boolean            @default(false)
+  isEmailVerified    Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  /// Relationships
+  // Avatar 1-1
+  avatarId           String?
+  cloudinaryStorage  CloudinaryStorage? @relation(fields: [avatarId], references: [id])
+  // OTP 1-1
+  otpId              String?
+  otp                OTP?               @relation(fields: [otpId], references: [id])
+  // Route 1-N
+  routes             Route[]
+  // Trip 1-N
+  trips              Trip[]
+  // Expense 1-N
+  expenses           Expense[]          @relation("Expenses")
+  // Notification 1-N
+  notifications      Notification[]
+  // UploadRealTime 1-N
+  uploadRealTime     UploadRealTime[]   @relation("UploadRealTimeUsers")
+  // Expense 1-1
+  isPaymentExpenseId String?            @unique
+  isPaymentExpense   Expense?           @relation("Payer")
+  // Group N-N
+  groups             Group[]            @relation("GroupUsers")
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  code      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  /// Relationships
+  // User 1-N
+  user      User[]
+}
+
+model CloudinaryStorage {
+  id                String          @id @default(uuid())
+  url               String
+  assetId           String
+  publicId          String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  /// Relationships
+  // User 1-1
+  user              User[]
+  // Firebase 1-1
+  firebaseSetting   FirebaseSetting @relation(fields: [firebaseSettingId], references: [id])
+  firebaseSettingId String          @unique
+}
+
+model FirebaseSetting {
+  id                String             @id @default(uuid())
+  apiKey            String
+  authDomain        String
+  projectId         String
+  storageBucket     String
+  messagingSenderId String
+  appId             String
+  measurementId     String
+  enabled           Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  /// Relationships
+  // Account Json 1-1
+  accountJson       CloudinaryStorage?
+}
+
+model UploadRealTime {
+  id           String       @id @default(uuid())
+  title        String?
+  description  String?
+  enabled      Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  /// Relationships
+  // Destination 1-1
+  destinations Destination?
+  // Route 1-1
+  route        Route        @relation(fields: [routeId], references: [id])
+  routeId      String       @unique
+  // User N-N
+  users        User[]       @relation("UploadRealTimeUsers")
+}
+
+model Destination {
+  id               String          @id @default(uuid())
+  latitude         String
+  longitude        String
+  placeName        String
+  address          String
+  placeId          String
+  placeType        String
+  description      String?
+  mapUrl           String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  /// Relationships
+  // Upload Real Time 1-1
+  uploadRealTimeId String?         @unique
+  uploadRealTime   UploadRealTime? @relation(fields: [uploadRealTimeId], references: [id])
+  // Route 1-1
+  route            Route           @relation(fields: [routeId], references: [id])
+  routeId          String          @unique
+  // Notification 1-N
+  notifications    Notification[]
+}
+
+model MapSettings {
+  id               String   @id @default(uuid())
+  googleMapsApiKey String
+  vietmapApiKey    String
+  geocoderApiKey   String
+  enableGoogleMaps Boolean  @default(false)
+  enableVietmap    Boolean  @default(false)
+  enableGeocoder   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Notification {
+  id            String       @id @default(uuid())
+  title         String
+  message       String
+  imageUrl      String?
+  link          String?
+  isAll         Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  /// Relationships
+  // Route 1-1
+  route         Route?
+  // User 1-1
+  userId        String?      @unique
+  user          User?        @relation(fields: [userId], references: [id])
+  // Destination 1-1
+  destinationId String?      @unique
+  destination   Destination? @relation(fields: [destinationId], references: [id])
+}
+
+model Route {
+  id             String           @id @default(uuid())
+  name           String
+  startTime      DateTime
+  endTime        DateTime
+  isCompleted    Boolean          @default(false)
+  describle      String?
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  /// Relationships
+  // Destination 1-1
+  destination    Destination?
+  // UploadRealTime 1-N
+  uploadRealTime UploadRealTime[]
+  // User 1-1
+  userId         String?          @unique
+  user           User?            @relation(fields: [userId], references: [id])
+  // Trip 1-1
+  tripId         String?          @unique
+  trip           Trip?            @relation(fields: [tripId], references: [id])
+  // Expense 1-1
+  expenseId      String?          @unique
+  expense        Expense?         @relation(fields: [expenseId], references: [id])
+  // Notification 1-1
+  notificationId String?          @unique
+  notification   Notification?    @relation(fields: [notificationId], references: [id])
+}
+
+model Trip {
+  id              String   @id @default(uuid())
+  name            String
+  startTime       DateTime
+  endTime         DateTime
+  note            String?
+  totalDistance   String?
+  totalTime       String?
+  totalCalories   String?
+  totalCost       String?
+  startLocationId String
+  endLocationId   String
+  isCompleted     Boolean  @default(false)
+  describle       String?
+  description     String?
+  /// Relationships
+  // Route 1-N
+  route           Route[]
+  // User 1-1
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id])
+  // Group 1-1
+  groupId         String?  @unique
+  group           Group?   @relation(fields: [groupId], references: [id])
+  // Type 1-N
+  types           Type[]   @relation("TripTypes")
+}
+
+model Type {
+  id          String    @id @default(uuid())
+  type        EType
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  /// Relationships
+  // Trip N-N
+  trips       Trip[]    @relation("TripTypes")
+  // Expense N-N
+  expenses    Expense[] @relation("ExpenseTypes")
+}
+
+model Expense {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  amount      String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  /// Relationships
+  // Route 1-N
+  route       Route[]
+  // User 1-1
+  userId      String?     @unique
+  user        User?       @relation("Expenses", fields: [userId], references: [id])
+  // Payment Expense 1-1
+  payerId     String?     @unique
+  payer       User?       @relation("Payer", fields: [payerId], references: [id])
+  // Type N-N
+  types       Type[]      @relation("ExpenseTypes")
+  // Currency 1-1
+  currency    Currencies?
+}
+
+model Currencies {
+  id        String   @id @default(uuid())
+  name      String
+  symbol    String
+  code      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  /// Relationships
+  // Expense 1-1
+  expenseId String?  @unique
+  expense   Expense? @relation(fields: [expenseId], references: [id])
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  /// Relationships
+  // Trip 1-N
+  trips       Trip[]
+  // User N-N
+  users       User[]   @relation("GroupUsers")
+}
+
+enum EType {
+  Trip
+  Expense
+  Notification
+}
