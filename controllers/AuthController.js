@@ -27,32 +27,46 @@ class AuthController extends Controller {
   async register() {
     try {
       const { phone, password, email } = this.req.body;
+      if (!email) {
+        return this.response(422, "Email is required");
+      }
+
+      if(!phone) {
+        return this.response(422, "Phone number is required");
+      }
+
+      if(!password) {
+        return this.response(422, "Password is required");
+      }
+
+      if (password.length < 6) {
+        return this.response(422, "Password must be greater than 6 characters");
+      }
+
       const getUser = await userService.checkUserExistByPhone(phone);
       if (getUser) {
-        return this.response(422, "Số Điện Thoại đã tồn tại");
+        return this.response(422, "Phone number is already exists");
       }
 
       const getEmail = await userService.checkUserExistByEmail(email);
-      if(getEmail) {
-        return this.response(422, "Email đã tồn tại");
+      if (getEmail) {
+        return this.response(422, "Email is already exists");
       }
 
-      if(!email) {
-        return this.response(422, "Email không được rỗng");
+      
+      const createUser = await userService.createUser({
+        phone,
+        password: await bcrypt.hashSync(password, 10),
+        email,
+      });
+
+      if(createUser) {
+        return this.response(200, "Register successfully");
       }
-
-      if(password.length < 6) {
-        return this.response(422, "Mật Khẩu phải lớn hơn 6 ký tự");
-      }
-
-      // Decode password  
-      const decodedPassword = bcrypt.hashSync(password, 10);
-
-      const createUser = await userService.createUser({ phone, password: decodedPassword, email });
-      return this.response(200, createUser);
+      return this.response(422, "Register failed");
     } catch (error) {
       console.log(error);
-      return this.response(500, error);
+      return this.response(500, error.message);
     }
   }
 
@@ -66,13 +80,12 @@ class AuthController extends Controller {
    */
   async testLogin() {
     try {
-      const auth = this.req.header("authorization");
-      const token = auth.split(" ")[1];
+      const token = this.getToken();
 
       const user = await authService.loginWithCustomToken(token);
       return this.response(200, user);
     } catch (error) {
-      return this.response(500, error);
+      return this.response(500, error.message);
     }
   }
 
@@ -89,108 +102,86 @@ class AuthController extends Controller {
       const { phone, email, password } = this.req.body;
 
       if (!phone) {
-        return this.response(422, "Số Điện Thoại không được rỗng");
+        return this.response(422, "Phone number is required");
       }
 
-      if(!email) {
-        return this.response(422, "Email không được rỗng");
+      if (!email) {
+        return this.response(422, "Email is required");
       }
 
       if (!password) {
-        return this.response(422, "Mật Khẩu không được rỗng");
+        return this.response(422, "Password is required");
       }
 
       const getUser = await userService.getUserByPhone(phone);
+
+      if (getUser === null || !getUser) {
+        return this.response(422, "Phone number is not registered");
+      }
 
       const oldPassword = getUser.password;
       const result = bcrypt.compareSync(password, oldPassword);
 
       if (!result) {
-        return this.response(422, "Mật khẩu không đúng");
+        return this.response(422, "Password is incorrect");
       }
 
       const token = await authService.createCustomToken(getUser.id);
 
-      return this.response(200,  token );
+      return this.response(200, token);
     } catch (error) {
-      return this.response(500, error);
+      return this.response(500, error.message);
     }
   }
 
   /**
-   * Logout
+   * App Check Verification
    * Request Body:
    * - token: string
    * @returns {Promise<String>}
    */
-  async logout() {
-    try {
-      const auth = this.req.header("authorization");
-      if (!auth) {
-        return this.response(401, "Vui lòng nhập Token");
-      }
-
-      const token = auth.split(" ")[1]; // Lấy token từ header
-      const decoded = jwt.verify(token, secret);
-      const userId = decoded.data.id;
-
-      const tokenModel = new TokenModel();
-      await tokenModel.updateStatus(token, 0);
-
-      return this.response(200, "Đăng xuất thành công");
-    } catch (err) {
-      return this.response(401, "Token không hợp lệ hoặc đã hết hạn");
-    }
-  }
-
   async appCheckVerification() {
-    const auth = this.req.header("authorization");
-  
-    if (!auth) {
-      return this.response(401, "Vui lòng cung cấp token");
-    }
-  
-    const token = auth.split(" ")[1];
-  
+    const token = this.getToken();
+
     if (!token) {
-      return this.response(401, "Token không hợp lệ");
+      return this.response(401, "Unauthorized: Token is not valid");
     }
-  
+
     try {
-      const decodedToken = await authService.verifyToken(token, true);
-  
+      const decodedToken = await this.verifyIdToken();
+
       if (decodedToken) {
         return this.response(200, decodedToken);
       } else {
-        return this.response(401, "Token không hợp lệ hoặc đã hết hạn");
+        return this.response(401, "Unauthorized: Token is expired");
       }
-  
     } catch (error) {
       console.log("Error during token verification:", error);
-      if (error.code === 'auth/id-token-revoked') {
-        return this.response(401, "Token đã bị thu hồi");
+      if (error.code === "auth/id-token-revoked") {
+        return this.response(401, "Unauthorized: Token is revoked");
       }
       // Generic token error
-      return this.response(401, "Token không hợp lệ hoặc đã hết hạn");
+      return this.response(401, "Unauthorized: Token is not valid");
     }
   }
-  
-  async checkToken() {
+
+  /**
+   * Revoke Token
+   * Request Body:
+   * - token: string
+   * @returns {Promise<String>}
+   */
+  async revokeToken() {
     try {
-      const auth = this.req.headers.authorization;
-      if (!auth || !authHeader.startsWith('Bearer ')) {
-        return this.response(401, "Vui lòng nhập Token");
-      }
+      const token = this.getToken();
+      const decodedToken = await authService.revokeRefreshToken(token);
 
-      const token = auth.split("Bearer ")[1];
-      const decodedToken = await admin.auth().verifyIdToken(token);
-
-      if (!decodedToken || decodedToken === 0) {
-        return this.response(403, "Token không hợp lệ hoặc đã hết hạn.");
+      if (!decodedToken) {
+        return this.response(403, "Unauthorized: Token is not valid");
       }
-      return this.next();
+      return this.response(200, "Revoke token successfully");
     } catch (error) {
-      return this.response(401, "Token không hợp lệ hoặc đã hết hạn.");
+      return this.response(500, error.message);
     }
   }
 }
