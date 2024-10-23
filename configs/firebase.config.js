@@ -1,5 +1,7 @@
-const initializeApp = require('firebase/app');
-const getAuth = require('firebase/auth');
+const { initializeApp } = require('firebase/app');
+const { getAuth } = require('firebase/auth');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -12,7 +14,8 @@ const firebaseConfig = {
 };
 
 // Khởi tạo Firebase Web SDK
-const firebaseApp = initializeApp(firebaseConfig);
-const firebaseAuth = getAuth(firebaseApp);
+// Khởi tạo Firebase
+const client = initializeApp(firebaseConfig);
+const clientAuth = getAuth(client);
 
-module.exports = { firebaseApp, firebaseAuth };
+module.exports = { client, clientAuth };

@@ -1,11 +1,11 @@
 const express = require("express");
-const admin = require("./configs/firebase_admin.config");
-const { firebaseApp, firebaseAuth } = require("./configs/firebase.config");
-const cloudinary = require("./configs/cloudinary.config");
-const mailer = require("./configs/mailer.config");
+const { admin, adminAuth } = require("./configs/firebase_admin.config");
+const { client, clientAuth } = require("./configs/firebase.config");
+// const cloudinary = require("./configs/cloudinary.config");
+// const mailer = require("./configs/mailer.config");
 const cors = require("cors");
 const app = express();
-const port = 3000;
+const port = process.env.APP_PORT;
 
 require("dotenv").config();
 const corsOptions = {

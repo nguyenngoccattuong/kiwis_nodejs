@@ -1,6 +1,6 @@
-const { admin } = require("../configs/firebase_admin.config");
-const { firebaseApp, firebaseAuth } = require("../configs/firebase.config");
-require('firebase/auth')
+const { admin, adminAuth } = require("../configs/firebase_admin.config");
+const { client, clientAuth } = require("../configs/firebase.config");
+const { signInWithCustomToken } = require('firebase/auth');
 
 class AuthService {
   /**
@@ -11,7 +11,7 @@ class AuthService {
    */
   async verifyToken(token, checkRevoked) {
     try {
-      const decodedToken = await admin.auth().verifyIdToken(token, checkRevoked);
+      const decodedToken = await adminAuth.verifyIdToken(token, checkRevoked);
       return decodedToken;
     } catch (error) {
       console.log("Error in verifyToken", error);
@@ -26,20 +26,22 @@ class AuthService {
    */
   async revokeRefreshToken(uid) {
     try {
-      await admin.auth().revokeRefreshTokens(uid);
+      await adminAuth.revokeRefreshTokens(uid);
+      return true;
     } catch (error) {
       console.log("Error in revokeRefreshToken", error);
+      throw new Error("Fail to revoke refresh token");
     }
   }
 
   /**
    * Function to create a custom token
    * @param {*} uid
-   * @returns {Promise<void>}
+   * @returns {Promise<String>}
    */
   async createCustomToken(uid) {
     try {
-      const token = await firebaseAuth.createCustomToken(uid);
+      const token = await adminAuth.createCustomToken(uid);
       return token;
     } catch (error) {
       console.log("Error in createCustomToken", error);
@@ -54,7 +56,7 @@ class AuthService {
    */
   async loginWithCustomToken(token) {
     try {
-      const user = await firebaseApp.auth().signInWithCustomToken(token);
+      const user = await signInWithCustomToken(clientAuth, token);
       return user;
     } catch (error) {
       console.log("Error in loginWithCustomToken", error);

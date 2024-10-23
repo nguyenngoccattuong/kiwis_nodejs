@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+const { adminAuth } = require("../configs/firebase_admin.config");
 
 class Controller {
   req;
@@ -37,16 +37,28 @@ class Controller {
     );
   }
 
-  auth_user() {
-    const auth = this.req.header("authorization");
-    const split_auth = auth.split(" ");
-    const token = split_auth[1];
-    const decoded = jwt.verify(token, process.env.SECRET);
-    return decoded["data"];
+  async verifyIdToken() {
+    const token = this.getToken();
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    return decodedToken;
   }
 
-  auth_user_id() {
-    return this.auth_user().id;
+  getToken() {
+    const authorization = this.req.headers.authorization;
+    this.checkAuthHeader(authorization);
+    const token = authorization.split(" ")[1];
+    return token;
+  }
+
+  async authUserId() {
+    const decodedToken = await this.verifyIdToken();
+    return decodedToken.uid;
+  }
+
+  checkAuthHeader(auth) {
+    if (!auth || !auth.startsWith("Bearer ")) {
+      return this.response(401, "Unauthorized: Please provide token");
+    }
   }
 }
 
