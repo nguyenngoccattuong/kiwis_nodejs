@@ -14,7 +14,9 @@ class UserService {
         email: true,
         password: true,
       },
-      where: { id },
+      where: {
+        id: id,
+      },
     });
     return user;
   }

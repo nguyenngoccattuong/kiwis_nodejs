@@ -45,6 +45,9 @@ class Controller {
 
   getToken() {
     const authorization = this.req.headers.authorization;
+    if (!authorization) {
+      throw new Error("Unauthorized: Token is not valid");
+    }
     this.checkAuthHeader(authorization);
     const token = authorization.split(" ")[1];
     return token;
@@ -57,7 +60,7 @@ class Controller {
 
   checkAuthHeader(auth) {
     if (!auth || !auth.startsWith("Bearer ")) {
-      return this.response(401, "Unauthorized: Please provide token");
+      throw new Error("Unauthorized: Please provide token");
     }
   }
 }

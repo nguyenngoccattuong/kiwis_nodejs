@@ -31,11 +31,11 @@ class AuthController extends Controller {
         return this.response(422, "Email is required");
       }
 
-      if(!phone) {
+      if (!phone) {
         return this.response(422, "Phone number is required");
       }
 
-      if(!password) {
+      if (!password) {
         return this.response(422, "Password is required");
       }
 
@@ -53,14 +53,13 @@ class AuthController extends Controller {
         return this.response(422, "Email is already exists");
       }
 
-      
       const createUser = await userService.createUser({
         phone,
         password: await bcrypt.hashSync(password, 10),
         email,
       });
 
-      if(createUser) {
+      if (createUser) {
         return this.response(200, "Register successfully");
       }
       return this.response(422, "Register failed");
@@ -134,6 +133,24 @@ class AuthController extends Controller {
     }
   }
 
+  async authorization() {
+    try {
+      const token = this.getToken();
+
+      if (!token) {
+        return this.response(401, "Unauthorized: Token is not valid");
+      }
+
+      const decodedToken = await authService.verifyToken(token);
+      if (decodedToken) {
+        return this.next();
+      }
+      return this.response(401, "Unauthorized: Token is not valid");
+    } catch (error) {
+      return this.response(500, error.message);
+    }
+  }
+
   /**
    * App Check Verification
    * Request Body:
@@ -160,7 +177,6 @@ class AuthController extends Controller {
       if (error.code === "auth/id-token-revoked") {
         return this.response(401, "Unauthorized: Token is revoked");
       }
-      // Generic token error
       return this.response(401, "Unauthorized: Token is not valid");
     }
   }
