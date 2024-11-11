@@ -15,6 +15,15 @@ router.post("/auth/test-login", (req, res) => new Auth(req, res).testLogin());
 router.post("/auth/revoke-token", (req, res) =>
   new Auth(req, res).revokeToken()
 );
+router.post("/auth/reset-password", (req, res) =>
+  new Auth(req, res).resetPassword()
+);
+router.post("/auth/forgot-password", (req, res) =>
+  new Auth(req, res).forgotPassword()
+);
+router.post("/auth/change-password", (req, res) =>
+  new Auth(req, res).changePassword()
+);
 
 // User
 router.get(

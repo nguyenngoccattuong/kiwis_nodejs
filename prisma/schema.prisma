@@ -52,6 +52,8 @@ model User {
 model OTP {
   id        String   @id @default(uuid())
   code      String
+  exprire   DateTime
+  email     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   /// Relationships

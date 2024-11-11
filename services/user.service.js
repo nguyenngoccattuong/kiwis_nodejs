@@ -50,7 +50,7 @@ class UserService {
    * @returns {Promise<User>}
    */
   async getUserByEmail(email) {
-    const user = await prisma.user.findUnique({
+    return await prisma.user.findUnique({
       where: { email },
     });
   }
