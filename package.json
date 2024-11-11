@@ -25,6 +25,7 @@
     "mysql": "^2.18.1",
     "mysql2": "^3.11.3",
     "nodemailer": "^6.9.15",
+    "otp-generator": "^4.0.1",
     "promise-mysql": "^5.2.0",
     "zod": "^3.23.8"
   },

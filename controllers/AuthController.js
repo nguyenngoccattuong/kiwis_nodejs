@@ -6,11 +6,16 @@ const Controller = require("./Controller");
 
 const AuthService = require("../services/auth.service");
 const UserService = require("../services/user.service");
+const OtpService = require("../services/otp.service");
+const Validation = require("../helper/Validation");
 
 require("dotenv").config();
 
 const userService = new UserService();
 const authService = new AuthService();
+const otpService = new OtpService();
+const validation = new Validation();
+
 class AuthController extends Controller {
   constructor(req, res, next) {
     super(req, res, next);
@@ -27,8 +32,26 @@ class AuthController extends Controller {
   async register() {
     try {
       const { phone, password, email } = this.req.body;
+
+      // Validate the password strength
+      const validationMessage = checkStrength(password);
+
+      // Check if the password is strong enough
+      if (
+        validationMessage.includes("too short") ||
+        validationMessage.includes("too lengthy") ||
+        validationMessage.includes("Weak")
+      ) {
+        // Respond with an error message
+        return this.response(422, validationMessage);
+      }
+
       if (!email) {
         return this.response(422, "Email is required");
+      }
+
+      if (!Validation.validateEmail(email)) {
+        return this.response(422, "Email is not valid");
       }
 
       if (!phone) {
@@ -196,6 +219,116 @@ class AuthController extends Controller {
         return this.response(403, "Unauthorized: Token is not valid");
       }
       return this.response(200, "Revoke token successfully");
+    } catch (error) {
+      return this.response(500, error.message);
+    }
+  }
+
+  async forgotPassword() {
+    try {
+      const { email } = this.req.body;
+
+      if (!email) {
+        return this.response(422, "Email is required");
+      }
+
+      if (!validation.validateEmail(email)) {
+        return this.response(422, "Email is not valid");
+      }
+
+      const user = await userService.getUserByEmail(email);
+
+      if (!user) {
+        return this.response(422, "Email is not registered");
+      }
+      const otp = otpService.createOtp(user.email);
+
+      return this.response(200, "Email sent successfully");
+    } catch (error) {
+      return this.response(500, error.message);
+    }
+  }
+
+  async resetPassword() {
+    try {
+      const { email, otp, password, confirmPassword } = this.req.body;
+
+      if (password !== confirmPassword) {
+        return this.response(422, "Password and confirm password do not match");
+      }
+
+      // Validate the password strength
+      const validationMessage = checkStrength(password);
+
+      // Check if the password is strong enough
+      if (
+        validationMessage.includes("too short") ||
+        validationMessage.includes("too lengthy") ||
+        validationMessage.includes("Weak")
+      ) {
+        // Respond with an error message
+        return this.response(422, validationMessage);
+      }
+
+      const user = await userService.getUserByEmail(email);
+
+      if (!user) {
+        return this.response(422, "Email is not registered");
+      }
+
+      const verifyOtp = otpService.verifyOtp(otp, user.otp.code);
+
+      if (!verifyOtp) {
+        return this.response(422, "OTP is not valid");
+      }
+
+      const updatePassword = await userService.updateUser(user.id, {
+        password: await bcrypt.hashSync(password, 10),
+      });
+
+      await otpService.deleteOtp(user.id);
+
+      return this.response(200, "Password reset successfully");
+    } catch (error) {
+      return this.response(500, error.message);
+    }
+  }
+
+  async changePassword() {
+    try {
+      const { oldPassword, newPassword, confirmPassword } = this.req.body;
+
+      if (newPassword !== confirmPassword) {
+        return this.response(422, "Password and confirm password do not match");
+      }
+
+      // Validate the password strength
+      const validationMessage = checkStrength(password);
+
+      // Check if the password is strong enough
+      if (
+        validationMessage.includes("too short") ||
+        validationMessage.includes("too lengthy") ||
+        validationMessage.includes("Weak")
+      ) {
+        // Respond with an error message
+        return this.response(422, validationMessage);
+      }
+
+      const user = await userService.getUserById(this.req.user.uid);
+
+      const userPassword = user.password;
+      const result = bcrypt.compareSync(oldPassword, userPassword);
+
+      if (!result) {
+        return this.response(422, "Old password is incorrect");
+      }
+
+      const updatePassword = await userService.updateUser(user.id, {
+        password: await bcrypt.hashSync(newPassword, 10),
+      });
+
+      return this.response(200, "Password changed successfully");
     } catch (error) {
       return this.response(500, error.message);
     }
