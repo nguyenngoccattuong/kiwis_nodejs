@@ -34,7 +34,7 @@ class AuthController extends Controller {
       const { phone, password, email } = this.req.body;
 
       // Validate the password strength
-      const validationMessage = checkStrength(password);
+      const validationMessage = validation.checkStrength(password);
 
       // Check if the password is strong enough
       if (
@@ -50,7 +50,7 @@ class AuthController extends Controller {
         return this.response(422, "Email is required");
       }
 
-      if (!Validation.validateEmail(email)) {
+      if (!validation.validateEmail(email)) {
         return this.response(422, "Email is not valid");
       }
 
