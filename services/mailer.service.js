@@ -18,6 +18,13 @@ class MailerService {
       subject,
       text,
     };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`Email sent to ${to}`);
+    } catch (error) {
+      console.error("Error sending email:", error);
+    }
   }
 
   /**
@@ -37,6 +44,13 @@ class MailerService {
       text,
       attachment,
     };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`Email sent to ${to}`);
+    } catch (error) {
+      console.error("Error sending email:", error);
+    }
   }
 }
 

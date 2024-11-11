@@ -27,10 +27,9 @@ class UserService {
    * @returns {Promise<boolean>}
    */
   async checkUserExistByPhone(phone) {
-    const user = await prisma.user.findUnique({
+    return await prisma.user.findUnique({
       where: { phone },
     });
-    return user;
   }
 
   /**
@@ -39,7 +38,7 @@ class UserService {
    * @returns {Promise<boolean>}
    */
   async checkUserExistByEmail(email) {
-    const user = await prisma.user.findUnique({
+    return await prisma.user.findUnique({
       where: { email },
     });
   }
