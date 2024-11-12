@@ -114,6 +114,14 @@ class UserService {
     });
     return deletedUser;
   }
+
+  async changeAvatar(id, cloudStorageId) {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { avatarId: cloudStorageId },
+    });
+    return updatedUser;
+  }
 }
 
 module.exports = UserService;

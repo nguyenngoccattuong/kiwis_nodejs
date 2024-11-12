@@ -38,5 +38,10 @@ router.get(
   (req, res, next) => new Auth(req, res, next).authorization(),
   (req, res) => new User(req, res).findById(req.params.uid)
 );
+router.post(
+  "/user/change-avatar",
+  (req, res, next) => new Auth(req, res, next).authorization(),
+  (req, res) => new User(req, res).changeAvatar()
+);
 
 module.exports = router;
