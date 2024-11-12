@@ -43,37 +43,37 @@ class AuthController extends Controller {
         validationMessage.includes("Weak")
       ) {
         // Respond with an error message
-        return Error(validationMessage);
+        throw Error(validationMessage);
       }
 
       if (!email) {
-        return Error("Email is required");
+        throw Error("Email is required");
       }
 
       if (!validation.validateEmail(email)) {
-        return Error("Email is not valid");
+        throw Error("Email is not valid");
       }
 
       if (!phone) {
-        return Error("Phone number is required");
+        throw Error("Phone number is required");
       }
 
       if (!password) {
-        return Error("Password is required");
+        throw Error("Password is required");
       }
 
       if (password.length < 6) {
-        return Error("Password must be greater than 6 characters");
+        throw Error("Password must be greater than 6 characters");
       }
 
       const getUser = await userService.checkUserExistByPhone(phone);
       if (getUser) {
-        return Error("Phone number is already exists");
+        throw Error("Phone number is already exists");
       }
 
       const getEmail = await userService.checkUserExistByEmail(email);
       if (getEmail) {
-        return Error("Email is already exists");
+        throw Error("Email is already exists");
       }
 
       const createUser = await userService.createUser({
@@ -85,11 +85,8 @@ class AuthController extends Controller {
       if (createUser) {
         return this.response(200, "Register successfully");
       }
-      return Error("Register failed");
+      throw Error("Register failed");
     } catch (error) {
-      if(error instanceof Error){
-        return this.error(error.message);
-      }
       return this.response(500, error.message);
     }
   }
@@ -126,37 +123,34 @@ class AuthController extends Controller {
       const { phone, email, password } = this.req.body;
 
       if (!phone) {
-        return Error("Phone number is required");
+        throw Error("Phone number is required");
       }
 
       if (!email) {
-        return Error("Email is required");
+        throw Error("Email is required");
       }
 
       if (!password) {
-        return Error("Password is required");
+        throw Error("Password is required");
       }
 
       const getUser = await userService.getUserByPhone(phone);
 
       if (getUser === null || !getUser) {
-        return Error("Phone number is not registered");
+        throw Error("Phone number is not registered");
       }
 
       const oldPassword = getUser.password;
       const result = bcrypt.compareSync(password, oldPassword);
 
       if (!result) {
-        return Error("Password is incorrect");
+        throw Error("Password is incorrect");
       }
 
       const token = await authService.createCustomToken(getUser.id);
 
       return this.response(200, token);
     } catch (error) {
-      if(error instanceof Error){
-        return this.error(error.message);
-      }
       return this.response(500, error.message);
     }
   }
@@ -201,7 +195,6 @@ class AuthController extends Controller {
         return this.response(401, "Unauthorized: Token is expired");
       }
     } catch (error) {
-
       console.log("Error during token verification:", error);
       if (error.code === "auth/id-token-revoked") {
         return this.response(401, "Unauthorized: Token is revoked");
@@ -235,44 +228,91 @@ class AuthController extends Controller {
       const { email } = this.req.body;
 
       if (!email) {
-        return Error("Email is required");
+        throw Error("Email is required");
       }
 
       if (!validation.validateEmail(email)) {
-        return Error("Email is not valid");
+        throw Error("Email is not valid");
       }
 
       const user = await userService.getUserByEmail(email);
 
       if (!user) {
-        return Error("Email is not registered");
+        throw Error("Email is not registered");
       }
+
+      const checkTimeOtp = await otpService.checkTimeOtp(user.email);
+      if (checkTimeOtp) {
+        throw Error("OTP is expired");
+      } else {
+        await otpService.deleteOtp(user.email);
+      }
+
       const otp = otpService.createOtp(user.email);
-      if(otp){
+      if (otp) {
         return this.response(200, "Email sent successfully");
       }
       return this.response(500, "Email sent failed");
     } catch (error) {
-      if(error instanceof Error){
-        return this.error(error.message);
-      }
       return this.response(500, error.message);
     }
   }
+  // async forgotPassword() {
+  //   try {
+  //     const { email } = this.req.body;
+
+  //     if (!email) {
+  //       throw new Error("Email is required");
+  //     }
+
+  //     if (!validation.validateEmail(email)) {
+  //       throw new Error("Email is not valid");
+  //     }
+
+  //     const user = await userService.getUserByEmail(email);
+  //     if (!user) {
+  //       throw new Error("Email is not registered");
+  //     }
+
+  //     // Kiểm tra OTP đã tồn tại
+  //     const existingOtp = await otpService.getOtpByEmail(user.email);
+  //     if (existingOtp) {
+  //       // Kiểm tra thời gian của OTP
+  //       const checkTimeOtp = await otpService.checkTimeOtp(user.email);
+  //       if (!checkTimeOtp) {
+  //         await otpService.deleteOtp(user.email); // Xóa OTP đã hết hạn
+  //       }
+  //     }
+
+  //     // Tạo OTP mới
+  //     const otp = await otpService.createOtp(user.email);
+  //     if (otp) {
+  //       // Gửi email với OTP (giả sử bạn có một phương thức gửi email)
+  //       await emailService.sendOtpEmail(user.email, otp);
+  //       return this.response(200, "Email sent successfully");
+  //     }
+  //     return this.response(500, "Email sending failed");
+  //   } catch (error) {
+  //     return this.response(
+  //       500,
+  //       error.message || "An error occurred while processing your request"
+  //     );
+  //   }
+  // }
 
   async resetPassword() {
     try {
       const { email, otp, password, confirmPassword } = this.req.body;
 
       /// Validation password
-      if(!password){
+      if (!password) {
         return this.response(442, "Password is required");
       }
-      if(!confirmPassword){
+      if (!confirmPassword) {
         return this.response(442, "Confirm password is required");
       }
       if (password !== confirmPassword) {
-        return Error("Password and confirm password do not match");
+        throw Error("Password and confirm password do not match");
       }
       /// Validation strenght password
       const validationMessage = validation.checkStrength(password);
@@ -281,25 +321,30 @@ class AuthController extends Controller {
         validationMessage.includes("too lengthy") ||
         validationMessage.includes("Weak")
       ) {
-        return Error(validationMessage);
+        throw Error(validationMessage);
       }
 
       /// Validation email
       const user = await userService.getUserByEmail(email);
 
       if (!user) {
-        return Error("Email is not registered");
+        throw Error("Email is not registered");
       }
 
       /// Valation otp
-      if(!otp){
+      if (!otp) {
         return this.response(442, "OTP is required");
       }
 
       const verifyOtp = await otpService.verifyOtp(otp, user.email);
 
       if (!verifyOtp) {
-        return Error("OTP is not valid");
+        throw Error("OTP is not valid");
+      }
+
+      const checkTimeOtp = await otpService.checkTimeOtp(user.email);
+      if (!checkTimeOtp) {
+        throw Error("OTP code has expired");
       }
 
       const updatePassword = await userService.updateUser(user.id, {
@@ -310,9 +355,6 @@ class AuthController extends Controller {
 
       return this.response(200, "Password reset successfully");
     } catch (error) {
-      if(error instanceof Error){
-        return this.error(error.message);
-      }
       return this.response(500, error.message);
     }
   }
@@ -321,24 +363,24 @@ class AuthController extends Controller {
     try {
       const { oldPassword, newPassword, confirmPassword } = this.req.body;
 
-      if(!oldPassword){
+      if (!oldPassword) {
         return this.response(442, "Old password is required");
       }
 
-      if(!newPassword){
+      if (!newPassword) {
         return this.response(442, "New password is required");
       }
 
-      if(!confirmPassword){
+      if (!confirmPassword) {
         return this.response(442, "Confirm password is required");
       }
 
       if (newPassword !== confirmPassword) {
-        return Error("Password and confirm password do not match");
+        throw Error("Password and confirm password do not match");
       }
 
       // Validate the password strength
-      const validationMessage = checkStrength(password);
+      const validationMessage = validation.checkStrength(newPassword);
 
       // Check if the password is strong enough
       if (
@@ -350,7 +392,7 @@ class AuthController extends Controller {
         throw Error(validationMessage);
       }
 
-      const user = await userService.getUserById(this.authUserId);
+      const user = await userService.getInfoUserById(await this.authUserId());
       const result = bcrypt.compareSync(oldPassword, user.password);
 
       if (!result) {
@@ -361,14 +403,11 @@ class AuthController extends Controller {
         password: await bcrypt.hashSync(newPassword, 10),
       });
 
-      if(!updatePassword){
-        throw Error("Updata password fail");
+      if (!updatePassword) {
+        throw Error("Update password fail");
       }
       return this.response(200, "Password changed successfully");
     } catch (error) {
-      if(error instanceof Error){
-        return this.error(error.message);
-      }
       return this.response(500, error.message);
     }
   }

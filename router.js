@@ -21,8 +21,10 @@ router.post("/auth/reset-password", (req, res) =>
 router.post("/auth/forgot-password", (req, res) =>
   new Auth(req, res).forgotPassword()
 );
-router.post("/auth/change-password", (req, res) =>
-  new Auth(req, res).changePassword()
+router.post(
+  "/auth/change-password",
+  (req, res, next) => new Auth(req, res, next).authorization(),
+  (req, res) => new Auth(req, res).changePassword()
 );
 
 // User

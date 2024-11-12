@@ -21,6 +21,15 @@ class UserService {
     return user;
   }
 
+  async getInfoUserById(id) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    return user;
+  }
+
   /**
    * Check user is exist by phone
    * @param {*} phone
