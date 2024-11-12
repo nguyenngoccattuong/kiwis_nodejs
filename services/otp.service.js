@@ -18,32 +18,54 @@ class OtpService {
     await mailerService.sendEmail(to, "OTP", otp);
   }
 
-  async verifyOtp(otp, hashedOtp) {
-    return this.otp.verify(otp, hashedOtp);
+  async verifyOtp(otp, email) {
+    try{
+      const findOtp = await this.getOtpByEmail(email);
+      if(!findOtp){
+        throw new Error("Email isn't have otp")
+      }
+      return await bcrypt.compare(otp, findOtp.otp);
+    }catch(err){
+      throw new Error(err);
+    }
+    
   }
 
   async createOtp(email) {
-    const otp = this.generateOtp();
-    await this.sendOtp(email, otp);
-    const hashedOtp = await bcrypt.hashSync(otp, 10);
-    const otpTime = Date.now() + 60000; // Hết hạn sau 1 phút
-    return await prisma.oTP.create({
-      data: { email, code: hashedOtp, exprire: new Date(otpTime) },
+    try{
+      const otp = this.generateOtp();
+      await this.sendOtp(email, otp);
+      const hashedOtp = await bcrypt.hashSync(otp, 10);
+      const otpTime = Date.now() + 60000; // Hết hạn sau 1 phút
+      const otpCreated = await prisma.otp.create({
+        data: { email, otp: hashedOtp, exprire: new Date(otpTime) },
+      });
+      return otpCreated;
+    }catch(err){
+      console.log(err);
+    }
+  }
+
+  async deleteOtp(email) {
+    return await prisma.otp.deleteMany({
+      where: {
+        email: email
+      },
     });
   }
 
-  async deleteOtp(userId) {
-    await prisma.otp.deleteMany({
-      where: { userId },
+  /**
+   * Function to get otp by email
+   * @param {*} email
+   * @returns {Promise<otp>}
+   */
+  async getOtpByEmail(email) {
+    return await prisma.otp.findFirst({
+      where: { email },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
-    return true;
-  }
-
-  async getOtp(userId) {
-    const otp = await prisma.otp.findUnique({
-      where: { userId },
-    });
-    return otp;
   }
 }
 

@@ -11,7 +11,6 @@ CREATE TABLE `User` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `avatarId` VARCHAR(191) NULL,
-    `otpId` VARCHAR(191) NULL,
     `isPaymentExpenseId` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
@@ -21,9 +20,11 @@ CREATE TABLE `User` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `OTP` (
+CREATE TABLE `Otp` (
     `id` VARCHAR(191) NOT NULL,
-    `code` VARCHAR(191) NOT NULL,
+    `otp` VARCHAR(191) NOT NULL,
+    `exprire` DATETIME(3) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -267,9 +268,6 @@ CREATE TABLE `_GroupUsers` (
 
 -- AddForeignKey
 ALTER TABLE `User` ADD CONSTRAINT `User_avatarId_fkey` FOREIGN KEY (`avatarId`) REFERENCES `CloudinaryStorage`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_otpId_fkey` FOREIGN KEY (`otpId`) REFERENCES `OTP`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CloudinaryStorage` ADD CONSTRAINT `CloudinaryStorage_firebaseSettingId_fkey` FOREIGN KEY (`firebaseSettingId`) REFERENCES `FirebaseSetting`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
