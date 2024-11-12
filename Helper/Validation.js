@@ -28,7 +28,7 @@ class Validation {
     if (/[!@#$%^&*.?]/.test(pass)) count++; // Contains special characters
 
     // Return password and strength level based on `count`
-    return "Password is " + strength[count];
+    return "Password is " + this.strength[count];
   }
 
   validateEmail = (email) => {
