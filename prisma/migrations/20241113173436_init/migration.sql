@@ -23,7 +23,7 @@ CREATE TABLE `User` (
 CREATE TABLE `Otp` (
     `id` VARCHAR(191) NOT NULL,
     `otp` VARCHAR(191) NOT NULL,
-    `expire` DATETIME(3) NOT NULL,
+    `exprire` DATETIME(3) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE `CloudinaryStorage` (
     `publicId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `firebaseSettingId` VARCHAR(191) NOT NULL,
+    `firebaseSettingId` VARCHAR(191) NULL,
 
     UNIQUE INDEX `CloudinaryStorage_firebaseSettingId_key`(`firebaseSettingId`),
     PRIMARY KEY (`id`)
@@ -71,6 +71,7 @@ CREATE TABLE `UploadRealTime` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `routeId` VARCHAR(191) NOT NULL,
+    `fileId` VARCHAR(191) NOT NULL,
 
     UNIQUE INDEX `UploadRealTime_routeId_key`(`routeId`),
     PRIMARY KEY (`id`)
@@ -270,10 +271,13 @@ CREATE TABLE `_GroupUsers` (
 ALTER TABLE `User` ADD CONSTRAINT `User_avatarId_fkey` FOREIGN KEY (`avatarId`) REFERENCES `CloudinaryStorage`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `CloudinaryStorage` ADD CONSTRAINT `CloudinaryStorage_firebaseSettingId_fkey` FOREIGN KEY (`firebaseSettingId`) REFERENCES `FirebaseSetting`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `CloudinaryStorage` ADD CONSTRAINT `CloudinaryStorage_firebaseSettingId_fkey` FOREIGN KEY (`firebaseSettingId`) REFERENCES `FirebaseSetting`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UploadRealTime` ADD CONSTRAINT `UploadRealTime_routeId_fkey` FOREIGN KEY (`routeId`) REFERENCES `Route`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UploadRealTime` ADD CONSTRAINT `UploadRealTime_fileId_fkey` FOREIGN KEY (`fileId`) REFERENCES `CloudinaryStorage`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Destination` ADD CONSTRAINT `Destination_uploadRealTimeId_fkey` FOREIGN KEY (`uploadRealTimeId`) REFERENCES `UploadRealTime`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

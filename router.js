@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("./middleware/multer.middleware")
 
 const Auth = require("./controllers/AuthController");
 const User = require("./controllers/UserController");
@@ -44,6 +45,7 @@ router.get(
 );
 router.post(
   "/user/change-avatar",
+  upload.single("file"),
   (req, res, next) => new Auth(req, res, next).authorization(),
   (req, res) => new User(req, res).changeAvatar()
 );
