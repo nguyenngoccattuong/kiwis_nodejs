@@ -62,10 +62,6 @@ class AuthController extends Controller {
         throw Error("Password is required");
       }
 
-      if (password.length < 6) {
-        throw Error("Password must be greater than 6 characters");
-      }
-
       const getUser = await userService.checkUserExistByPhone(phone);
       if (getUser) {
         throw Error("Phone number is already exists");
@@ -120,21 +116,21 @@ class AuthController extends Controller {
    */
   async login() {
     try {
-      const { phone, email, password } = this.req.body;
-
-      if (!phone) {
-        throw Error("Phone number is required");
-      }
+      const { email, password } = this.req.body;
 
       if (!email) {
         throw Error("Email is required");
+      }
+
+      if (!validation.validateEmail(email)) {
+        throw Error("Email is not valid");
       }
 
       if (!password) {
         throw Error("Password is required");
       }
 
-      const getUser = await userService.getUserByPhone(phone);
+      const getUser = await userService.getUserByEmail(email);
 
       if (getUser === null || !getUser) {
         throw Error("Phone number is not registered");
@@ -147,9 +143,74 @@ class AuthController extends Controller {
         throw Error("Password is incorrect");
       }
 
+      if (getUser.isEmailVerified) {
+        const otp = otpService.createOtp(getUser.email);
+        if (otp) {
+          return this.response(200, "OTP sent successfully");
+        }
+        throw Error("OTP sent failed");
+      }
+
       const token = await authService.createCustomToken(getUser.id);
 
       return this.response(200, token);
+    } catch (error) {
+      return this.response(500, error.message);
+    }
+  }
+
+  async loginWithOtp() {
+    try {
+      const { email, otp } = this.req.body;
+
+      if (!email) {
+        throw Error("Email is required");
+      }
+
+      if (!validation.validateEmail(email)) {
+        throw Error("Email is not valid");
+      }
+
+      if (!otp) {
+        throw Error("OTP is required");
+      }
+
+      const user = await userService.getUserByEmail(email);
+
+      if (!user) {
+        throw Error("Email is not registered");
+      }
+
+      const verifyOtp = await otpService.verifyOtp(otp, user.email);
+
+      if (!verifyOtp) {
+        throw Error("OTP is not valid");
+      }
+
+      const checkTimeOtp = await otpService.checkTimeOtp(user.email);
+      if (!checkTimeOtp) {
+        throw Error("OTP code has expired");
+      }
+
+      const token = await authService.createCustomToken(user.id);
+
+      await otpService.deleteOtp(user.email);
+
+      return this.response(200, token);
+    } catch (error) {
+      return this.response(500, error.message);
+    }
+  }
+
+  async resendOtp() {
+    try {
+      const { email } = this.req.body;
+
+      const otp = otpService.createOtp(email);
+      if (otp) {
+        return this.response(200, "OTP sent successfully");
+      }
+      throw Error("OTP sent failed");
     } catch (error) {
       return this.response(500, error.message);
     }
@@ -257,48 +318,6 @@ class AuthController extends Controller {
       return this.response(500, error.message);
     }
   }
-  // async forgotPassword() {
-  //   try {
-  //     const { email } = this.req.body;
-
-  //     if (!email) {
-  //       throw new Error("Email is required");
-  //     }
-
-  //     if (!validation.validateEmail(email)) {
-  //       throw new Error("Email is not valid");
-  //     }
-
-  //     const user = await userService.getUserByEmail(email);
-  //     if (!user) {
-  //       throw new Error("Email is not registered");
-  //     }
-
-  //     // Kiểm tra OTP đã tồn tại
-  //     const existingOtp = await otpService.getOtpByEmail(user.email);
-  //     if (existingOtp) {
-  //       // Kiểm tra thời gian của OTP
-  //       const checkTimeOtp = await otpService.checkTimeOtp(user.email);
-  //       if (!checkTimeOtp) {
-  //         await otpService.deleteOtp(user.email); // Xóa OTP đã hết hạn
-  //       }
-  //     }
-
-  //     // Tạo OTP mới
-  //     const otp = await otpService.createOtp(user.email);
-  //     if (otp) {
-  //       // Gửi email với OTP (giả sử bạn có một phương thức gửi email)
-  //       await emailService.sendOtpEmail(user.email, otp);
-  //       return this.response(200, "Email sent successfully");
-  //     }
-  //     return this.response(500, "Email sending failed");
-  //   } catch (error) {
-  //     return this.response(
-  //       500,
-  //       error.message || "An error occurred while processing your request"
-  //     );
-  //   }
-  // }
 
   async resetPassword() {
     try {

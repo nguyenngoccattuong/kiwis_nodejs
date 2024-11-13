@@ -122,6 +122,14 @@ class UserService {
     });
     return updatedUser;
   }
+
+  async emailVerified(id) {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { isEmailVerified: true },
+    });
+    return updatedUser;
+  }
 }
 
 module.exports = UserService;

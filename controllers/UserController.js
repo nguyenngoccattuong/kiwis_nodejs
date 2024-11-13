@@ -46,6 +46,18 @@ class UserController extends Controller {
       return this.response(500, error);
     }
   }
+
+  async emailVerified() {
+    try {
+      const uid = await this.authUserId();
+      const user = await userService.emailVerified(uid);
+      return this.response(200, user);
+    } catch (error) {
+      return this.response(500, {
+        error: error.message,
+      });
+    }
+  }
 }
 
 module.exports = UserController;

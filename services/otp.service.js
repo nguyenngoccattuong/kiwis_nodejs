@@ -36,7 +36,7 @@ class OtpService {
       const otp = this.generateOtp();
       await this.sendOtp(email, otp);
       const hashedOtp = await bcrypt.hashSync(otp, 10);
-      const otpTime = Date.now() + 60000; // Hết hạn sau 1 phút
+      const otpTime = Date.now() + 3 * 60 * 1000; // Hết hạn sau 3 phút
       const otpCreated = await prisma.otp.create({
         data: { email, otp: hashedOtp, expire: new Date(otpTime) },
       });
