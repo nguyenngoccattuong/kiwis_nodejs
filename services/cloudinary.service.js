@@ -1,3 +1,7 @@
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
+
 class CloudinaryService {
   constructor() {
     this.cloudinary = require("cloudinary").v2;
@@ -7,16 +11,24 @@ class CloudinaryService {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
   }
+
   /**
    * Cloudinary upload file
-   * @param {*} file 
-   * @param {*} folder 
-   * @param {*} resourceType 
+   * @param {*} file
+   * @param {*} folder
+   * @param {*} resourceType
    * @returns {Promise<CloudinaryStorage>}
    */
 
-  async uploadFile(file, folder, resourceType) {
-    const response = this.cloudinary.uploader.upload(file, { resource_type: resourceType });
+  async uploadFile(file, folder, resourceType, public_id, destroy = false) {
+    const response = await this.cloudinary.uploader.upload(file.path, {
+      resource_type: resourceType,
+      folder: folder,
+    });
+    /// Destroy option
+    if(destroy){
+      await this.destroyFile(public_id);
+    }
     const cloudinaryStorage = await prisma.cloudinaryStorage.create({
       data: {
         url: response.secure_url,
@@ -29,8 +41,8 @@ class CloudinaryService {
 
   /**
    * Cloudinary destroy file
-   * @param {*} publicId 
-   * @returns 
+   * @param {*} publicId
+   * @returns
    */
   destroyFile(publicId) {
     return this.cloudinary.uploader.destroy(publicId);

@@ -27,22 +27,32 @@ class UserController extends Controller {
 
   async changeAvatar() {
     try {
-      const { file } = this.req;
+      const file  = this.req.file;
 
       if (!file) {
         return this.response(400, "File is required");
       }
 
       const uid = await this.authUserId();
+
+      const userExists  = await userService.getUserById(uid);
+      if(!userExists ){
+        throw new Error("User not found");
+      }
+
       const storageUpload = await cloudinaryService.uploadFile(
         file,
         CloudinaryFolder.avatar,
-        CloudinaryTypes.image
+        "image",
+        userExists.avatar.publicId,
+        true,
       );
-      const user = await userService.changeAvatar(uid, storageUpload.id);
-
+      
+      await userService.changeAvatar(uid, storageUpload.id);
+      const user  = await userService.getUserById(uid);
       return this.response(200, user);
     } catch (error) {
+      console.log(error);
       return this.response(500, error);
     }
   }
@@ -58,6 +68,8 @@ class UserController extends Controller {
       });
     }
   }
+
+  
 }
 
 module.exports = UserController;

@@ -14,6 +14,13 @@ class UserService {
         email: true,
         password: true,
       },
+      include: {
+        avatar:  {
+          omit: {
+            firebaseSettingId: true,
+          },
+        },
+      },
       where: {
         id: id,
       },
@@ -116,11 +123,11 @@ class UserService {
   }
 
   async changeAvatar(id, cloudStorageId) {
-    const updatedUser = await prisma.user.update({
+    const userUpdated = await prisma.user.update({
       where: { id },
       data: { avatarId: cloudStorageId },
     });
-    return updatedUser;
+    return userUpdated;
   }
 
   async emailVerified(id) {
