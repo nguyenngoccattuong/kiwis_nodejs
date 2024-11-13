@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 
 const { PrismaClient } = require("@prisma/client");
+const EmailTypes = require("../enum/email.enum");
 
 const prisma = new PrismaClient();
 const MailerService = require("./mailer.service");
@@ -15,33 +16,32 @@ class OtpService {
 
   async sendOtp(to, otp) {
     const mailerService = new MailerService();
-    await mailerService.sendEmail(to, "OTP", otp);
+    await mailerService.sendEmail(to, EmailTypes.FORGOT_PASSWORD, { otp });
   }
 
   async verifyOtp(otp, email) {
-    try{
+    try {
       const findOtp = await this.getOtpByEmail(email);
-      if(!findOtp){
-        throw new Error("Email isn't have otp")
+      if (!findOtp) {
+        throw new Error("Email isn't have otp");
       }
       return await bcrypt.compare(otp, findOtp.otp);
-    }catch(err){
+    } catch (err) {
       throw new Error(err);
     }
-    
   }
 
   async createOtp(email) {
-    try{
+    try {
       const otp = this.generateOtp();
       await this.sendOtp(email, otp);
       const hashedOtp = await bcrypt.hashSync(otp, 10);
-      const otpTime = Date.now() + 60000; // Hết hạn sau 1 phút
+      const otpTime = Date.now() + 3 * 60 * 1000; // Hết hạn sau 3 phút
       const otpCreated = await prisma.otp.create({
-        data: { email, otp: hashedOtp, exprire: new Date(otpTime) },
+        data: { email, otp: hashedOtp, expire: new Date(otpTime) },
       });
       return otpCreated;
-    }catch(err){
+    } catch (err) {
       console.log(err);
     }
   }
@@ -49,7 +49,7 @@ class OtpService {
   async deleteOtp(email) {
     return await prisma.otp.deleteMany({
       where: {
-        email: email
+        email: email,
       },
     });
   }
@@ -63,9 +63,14 @@ class OtpService {
     return await prisma.otp.findFirst({
       where: { email },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
+  }
+
+  async checkTimeOtp(email) {
+    const otp = await this.getOtpByEmail(email);
+    return otp.expire > Date.now();
   }
 }
 

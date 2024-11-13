@@ -21,6 +21,15 @@ class UserService {
     return user;
   }
 
+  async getInfoUserById(id) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    return user;
+  }
+
   /**
    * Check user is exist by phone
    * @param {*} phone
@@ -104,6 +113,22 @@ class UserService {
       where: { id },
     });
     return deletedUser;
+  }
+
+  async changeAvatar(id, cloudStorageId) {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { avatarId: cloudStorageId },
+    });
+    return updatedUser;
+  }
+
+  async emailVerified(id) {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { isEmailVerified: true },
+    });
+    return updatedUser;
   }
 }
 
