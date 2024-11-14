@@ -2,8 +2,10 @@ const UserService = require("../services/user.service");
 const Controller = require("./Controller");
 const CloudinaryService = require("../services/cloudinary.service");
 const UploadRealTimeService = require("../services/uploadRealTime.service");
+const Validation = require("../helper/Validation");
 const { CloudinaryFolder } = require("../enum/cloudinary.enum");
 
+const validate = new Validation();
 const cloudinaryService = new CloudinaryService();
 const uploadRealTimeService = new UploadRealTimeService();
 class UploadRealTimeController extends Controller {
@@ -15,6 +17,9 @@ class UploadRealTimeController extends Controller {
     try {
       const { title, description } = this.req.body;
       const file = this.req.file;
+
+      validate.validateImage(file);
+
       const storageUpload = await cloudinaryService.uploadFile(
         file,
         CloudinaryFolder.post,

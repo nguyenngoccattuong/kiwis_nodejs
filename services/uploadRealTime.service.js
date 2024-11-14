@@ -5,10 +5,10 @@ const prisma = new PrismaClient();
 class UploadRealTimeService {
   async uploadRealTime(uploadRealTime) {
     try {
-      const uploadRealTime = await prisma.uploadRealTime.create({
+      const uploadRealTimeCreated = await prisma.uploadRealTime.create({
         data: uploadRealTime,
       });
-      return uploadRealTime;
+      return uploadRealTimeCreated;
     } catch (error) {
       throw new Error(error.message);
     }

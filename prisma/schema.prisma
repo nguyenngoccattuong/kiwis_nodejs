@@ -100,11 +100,11 @@ model UploadRealTime {
   // Destination 1-1
   destinations Destination?
   // Route 1-1
-  route        Route        @relation(fields: [routeId], references: [id])
-  routeId      String       @unique
+  route        Route?        @relation(fields: [routeId], references: [id])
+  routeId      String?       @unique
   // Cloudinary Storage
-  fileId           String
-  file  CloudinaryStorage @relation(fields: [fileId], references: [id])
+  fileId           String?
+  file  CloudinaryStorage? @relation(fields: [fileId], references: [id])
   // User N-N
   users        User[]       @relation("UploadRealTimeUsers")
 }
