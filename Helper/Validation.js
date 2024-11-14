@@ -38,6 +38,36 @@ class Validation {
         /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
       );
   };
+
+  validateImage(file) {
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/gif"];
+    const maxSize = 10 * 1024 * 1024; // 10 MB limit
+
+    if (!allowedImageTypes.includes(file.mimetype)) {
+      throw Error("Invalid image file type. Only JPEG, PNG, and GIF are allowed.");
+    }
+
+    if (file.size > maxSize) {
+      throw Error("Image file size exceeds 5 MB.");
+    }
+
+    return true;
+  }
+
+  validateVideo(file) {
+    const allowedVideoTypes = ["video/mp4", "video/avi", "video/mkv"];
+    const maxSize = 50 * 1024 * 1024; // 50 MB limit
+
+    if (!allowedVideoTypes.includes(file.mimetype)) {
+      throw Error("Invalid video file type. Only MP4, AVI, and MKV are allowed.");
+    }
+
+    if (file.size > maxSize) {
+      throw Error("Video file size exceeds 50 MB.");
+    }
+
+    return true;
+  }
 }
 
 module.exports = Validation;
