@@ -133,7 +133,7 @@ class AuthController extends Controller {
       const getUser = await userService.getUserByEmail(email);
 
       if (getUser === null || !getUser) {
-        throw Error("Phone number is not registered");
+        throw Error("Email is not registered");
       }
 
       const oldPassword = getUser.password;

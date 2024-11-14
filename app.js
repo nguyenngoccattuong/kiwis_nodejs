@@ -20,6 +20,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors(corsOptions));
 
-app.use("/api", require("./router"));
+app.use("/api/auth", require("./routes/auth.route"));
+app.use("/api/user", require("./routes/user.route"));
 
 app.listen(port, () => console.log(`Server is running on port ${port}!`));
