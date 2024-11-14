@@ -44,8 +44,8 @@ class UserController extends Controller {
         file,
         CloudinaryFolder.avatar,
         "image",
-        userExists.avatarId ? userExists.avatar.publicId : null,
-        userExists.avatarId ? true : false
+        userExists.avatarId != null ? userExists.avatar.publicId : null,
+        userExists.avatarId != null ? true : false
       );
 
       await userService.changeAvatar(uid, storageUpload.id);
