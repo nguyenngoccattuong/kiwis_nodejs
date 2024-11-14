@@ -27,7 +27,7 @@ class UserController extends Controller {
 
   async changeAvatar() {
     try {
-      const file  = this.req.file;
+      const file = this.req.file;
 
       if (!file) {
         return this.response(400, "File is required");
@@ -35,8 +35,8 @@ class UserController extends Controller {
 
       const uid = await this.authUserId();
 
-      const userExists  = await userService.getUserById(uid);
-      if(!userExists ){
+      const userExists = await userService.getUserById(uid);
+      if (!userExists) {
         throw new Error("User not found");
       }
 
@@ -44,16 +44,16 @@ class UserController extends Controller {
         file,
         CloudinaryFolder.avatar,
         "image",
-        userExists.avatar.publicId,
-        true,
+        userExists.avatarId ? userExists.avatar.publicId : null,
+        userExists.avatarId ? true : false
       );
-      
+
       await userService.changeAvatar(uid, storageUpload.id);
-      const user  = await userService.getUserById(uid);
+      const user = await userService.getUserById(uid);
       return this.response(200, user);
     } catch (error) {
       console.log(error);
-      return this.response(500, error);
+      return this.response(500, error.message);
     }
   }
 
@@ -68,8 +68,6 @@ class UserController extends Controller {
       });
     }
   }
-
-  
 }
 
 module.exports = UserController;
