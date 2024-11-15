@@ -13,32 +13,26 @@ class UploadRealTimeController extends BaseController {
   }
 
   async uploadRealTime() {
-    try {
-      const { title, description } = this.req.body;
-      const file = this.req.file;
+    const { title, description } = this.req.body;
+    const file = this.req.file;
 
-      validate.validateImage(file);
+    validate.validateImage(file);
 
-      const storageUpload = await cloudinaryService.uploadFile(
-        file,
-        CloudinaryFolder.post,
-        "image"
-      );
+    const storageUpload = await cloudinaryService.uploadFile(
+      file,
+      CloudinaryFolder.post,
+      "image"
+    );
 
-      const uploadRealTime = await uploadRealTimeService.uploadRealTime({
-        title,
-        description,
-        fileId: storageUpload.id,
-      });
-      return this.response(200, uploadRealTime);
-    } catch (error) {
-      return this.response(500, error.message);
-    }
+    const uploadRealTime = await uploadRealTimeService.uploadRealTime({
+      title,
+      description,
+      fileId: storageUpload.id,
+    });
+    return this.response(200, uploadRealTime);
   }
 
-  async deleteUploadRealtime(){
-    
-  }
+  async deleteUploadRealtime() {}
 }
 
 module.exports = UploadRealTimeController;

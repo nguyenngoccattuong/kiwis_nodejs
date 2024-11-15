@@ -17,57 +17,42 @@ class UserController extends BaseController {
   }
 
   async findById(uid) {
-    try {
-      const user = await userService.getUserById(uid);
-      return this.response(200, user);
-    } catch (error) {
-      return this.response(500, error);
-    }
+    const user = await userService.getUserById(uid);
+    return this.response(200, user);
   }
 
   async changeAvatar() {
-    try {
-      const file = this.req.file;
+    const file = this.req.file;
 
-      if (!file) {
-        return this.response(400, "File is required");
-      }
-
-      const uid = await this.authUserId();
-
-      const userExists = await userService.getUserById(uid);
-      if (!userExists) {
-        throw new Error("User not found");
-      }
-
-      const storageUpload = await cloudinaryService.uploadFile(
-        file,
-        CloudinaryFolder.avatar,
-        "image",
-        userExists.avatarId != null ? userExists.avatar.publicId : null,
-        userExists.avatarId != null ? true : false
-      );
-
-      await userService.changeAvatar(uid, storageUpload.id);
-      const user = await userService.getUserById(uid);
-      return this.response(200, user);
-    } catch (error) {
-      console.log(error);
-      return this.response(500, error.message);
+    if (!file) {
+      return this.response(400, "File is required");
     }
+
+    const uid = await this.authUserId();
+
+    const userExists = await userService.getUserById(uid);
+    if (!userExists) {
+      throw new Error("User not found");
+    }
+
+    const storageUpload = await cloudinaryService.uploadFile(
+      file,
+      CloudinaryFolder.avatar,
+      "image",
+      userExists.avatarId != null ? userExists.avatar.publicId : null,
+      userExists.avatarId != null ? true : false
+    );
+
+    await userService.changeAvatar(uid, storageUpload.id);
+    const user = await userService.getUserById(uid);
+    return this.response(200, user);
   }
 
   async emailVerified() {
-    try {
-      const uid = await this.authUserId();
-      const userInfo = await userService.getUserById(uid);
-      const user = await userService.emailVerified(uid, userInfo.isEmailVerified);
-      return this.response(200, user);
-    } catch (error) {
-      return this.response(500, {
-        error: error.message,
-      });
-    }
+    const uid = await this.authUserId();
+    const userInfo = await userService.getUserById(uid);
+    const user = await userService.emailVerified(uid, userInfo.isEmailVerified);
+    return this.response(200, user);
   }
 }
 
