@@ -130,10 +130,10 @@ class UserService {
     return userUpdated;
   }
 
-  async emailVerified(id) {
+  async emailVerified(id, isEmailVerified) {
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: { isEmailVerified: true },
+      data: { isEmailVerified: !isEmailVerified },
     });
     return updatedUser;
   }

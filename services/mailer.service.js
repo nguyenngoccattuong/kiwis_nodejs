@@ -1,4 +1,4 @@
-const getEmailTemplate = require("../Helper/Email");
+const getEmailTemplate = require("../helper/email_template");
 const EmailTypes = require("../enum/email.enum");
 
 class MailerService {

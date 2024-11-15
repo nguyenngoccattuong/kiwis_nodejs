@@ -1,5 +1,5 @@
 const UserService = require("../services/user.service");
-const Controller = require("./Controller");
+const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
 const {
   CloudinaryFolder,
@@ -9,7 +9,7 @@ const {
 const userService = new UserService();
 const cloudinaryService = new CloudinaryService();
 
-class UserController extends Controller {
+class UserController extends BaseController {
   async currentUser() {
     const uid = await this.authUserId();
     const user = await userService.getUserById(uid);
@@ -60,7 +60,8 @@ class UserController extends Controller {
   async emailVerified() {
     try {
       const uid = await this.authUserId();
-      const user = await userService.emailVerified(uid);
+      const userInfo = await userService.getUserById(uid);
+      const user = await userService.emailVerified(uid, userInfo.isEmailVerified);
       return this.response(200, user);
     } catch (error) {
       return this.response(500, {
