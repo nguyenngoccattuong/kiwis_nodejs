@@ -1,14 +1,13 @@
-const UserService = require("../services/user.service");
-const Controller = require("./Controller");
+const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
 const UploadRealTimeService = require("../services/uploadRealTime.service");
-const Validation = require("../helper/Validation");
+const Validation = require("../helper/validation");
 const { CloudinaryFolder } = require("../enum/cloudinary.enum");
 
 const validate = new Validation();
 const cloudinaryService = new CloudinaryService();
 const uploadRealTimeService = new UploadRealTimeService();
-class UploadRealTimeController extends Controller {
+class UploadRealTimeController extends BaseController {
   constructor(req, res, next) {
     super(req, res, next);
   }
@@ -35,6 +34,10 @@ class UploadRealTimeController extends Controller {
     } catch (error) {
       return this.response(500, error.message);
     }
+  }
+
+  async deleteUploadRealtime(){
+    
   }
 }
 

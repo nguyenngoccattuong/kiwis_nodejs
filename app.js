@@ -2,8 +2,6 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const corsMiddleware = require("./middleware/corn.middleware");
 const loggerMiddleware = require("./middleware/logger.middleware");
-const { admin, adminAuth } = require("./configs/firebase_admin.config");
-const { client, clientAuth } = require("./configs/firebase.config");
 const errorHandle = require("./middleware/error.middleware");
 
 require("dotenv").config();

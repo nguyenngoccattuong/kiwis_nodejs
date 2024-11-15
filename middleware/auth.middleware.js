@@ -1,5 +1,5 @@
 const AuthService = require("../services/auth.service");
-const Controller = require("../controllers/Controller");
+const Controller = require("../controllers/base.controller");
 const authService = new AuthService();
 const controller = new Controller();
 

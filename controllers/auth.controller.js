@@ -1,13 +1,11 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const secret = process.env.SECRET;
 
-const Controller = require("./Controller");
+const BaseController = require("./base.controller");
 
 const AuthService = require("../services/auth.service");
 const UserService = require("../services/user.service");
 const OtpService = require("../services/otp.service");
-const Validation = require("../helper/Validation");
+const Validation = require("../helper/validation");
 
 require("dotenv").config();
 
@@ -16,7 +14,7 @@ const authService = new AuthService();
 const otpService = new OtpService();
 const validation = new Validation();
 
-class AuthController extends Controller {
+class AuthController extends BaseController {
   constructor(req, res, next) {
     super(req, res, next);
   }

@@ -1,6 +1,6 @@
 const { adminAuth } = require("../configs/firebase_admin.config");
 
-class Controller {
+class BaseController {
   req;
   res;
   next;
@@ -65,4 +65,4 @@ class Controller {
   }
 }
 
-module.exports = Controller;
+module.exports = BaseController;
