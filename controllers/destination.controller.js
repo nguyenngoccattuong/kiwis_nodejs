@@ -1,11 +1,11 @@
 const BaseController = require("./base.controller");
 
-class Destination extends BaseController{
+class DestinationController extends BaseController{
   constructor(req, res, next) {
     super(req, res, next);
   }
 
-  async findById(){
+  async create(){
 
   }
 
@@ -13,15 +13,17 @@ class Destination extends BaseController{
 
   }
 
-  async createRoute(){
+  async findById(uid){
 
   }
 
-  async updateRoute(){
+  async update(uid){
 
   }
 
-  async deleteRoute(){
-    
+  async delete(){
+
   }
 }
+
+module.exports = DestinationController;

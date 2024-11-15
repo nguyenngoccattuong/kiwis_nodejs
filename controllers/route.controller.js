@@ -5,7 +5,7 @@ class RouteController extends BaseController{
     super(req, res, next);
   }
 
-  async findById(){
+  async create(){
 
   }
 
@@ -13,15 +13,17 @@ class RouteController extends BaseController{
 
   }
 
-  async createRoute(){
+  async findById(uid){
 
   }
 
-  async updateRoute(){
+  async update(uid){
 
   }
 
-  async deleteRoute(){
+  async delete(){
 
   }
 }
+
+module.exports = RouteController;
