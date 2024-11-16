@@ -1,6 +1,6 @@
 const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
-const UploadRealTimeService = require("../services/uploadRealTime.service");
+const UploadRealTimeService = require("../services/upload_realtime.service");
 const Validation = require("../helper/validation");
 const { CloudinaryFolder } = require("../enum/cloudinary.enum");
 

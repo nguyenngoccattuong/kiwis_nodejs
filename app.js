@@ -1,13 +1,16 @@
 const express = require("express");
+const http = require('http');
 const bodyParser = require("body-parser");
+// Midleware
 const corsMiddleware = require("./middleware/corn.middleware");
 const loggerMiddleware = require("./middleware/logger.middleware");
 const errorHandle = require("./middleware/error.middleware");
+const { initSocketService } = require("./services/socket.service");
 
 require("dotenv").config();
 const app = express();
+const server = http.createServer(app);
 const port = process.env.APP_PORT;
-
 
 // Body parser
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -18,6 +21,9 @@ app.use(corsMiddleware);
 app.use(loggerMiddleware);
 // Error
 app.use(errorHandle);
+// Socket
+initSocketService(server);
+
 // Route
 app.use("/api/auth", require("./routers/auth.router"));
 app.use("/api/user", require("./routers/user.router"));
