@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["omitApi"]
 }
 
@@ -15,58 +15,62 @@ datasource db {
 }
 
 model User {
-  id                 String             @id @default(uuid())
-  email              String             @unique
-  phone              String             @unique
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  phone              String              @unique
   password           String
   bio                String?
-  isPublic           Boolean            @default(false)
-  isAdmin            Boolean            @default(false)
-  isEmailVerified    Boolean            @default(false)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  isPublic           Boolean             @default(false)
+  isAdmin            Boolean             @default(false)
+  isEmailVerified    Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   /// Relationships
   // Avatar 1-1
   avatarId           String?
-  avatar  CloudinaryStorage? @relation(fields: [avatarId], references: [id])
+  avatar             CloudinaryStorage?  @relation(fields: [avatarId], references: [id])
   // Route 1-N
   routes             Route[]
   // Trip 1-N
   trips              Trip[]
   // Expense 1-N
-  expenses           Expense[]          @relation("Expenses")
+  expenses           Expense[]           @relation("Expenses")
   // Notification 1-N
   notifications      Notification[]
   // UploadRealTime 1-N
-  uploadRealTime     UploadRealTime[]   @relation("UploadRealTimeUsers")
+  uploadRealTime     UploadRealTime[]    @relation("UploadRealTimeUsers")
   // Expense 1-1
-  isPaymentExpenseId String?            @unique
-  isPaymentExpense   Expense?           @relation("Payer")
+  isPaymentExpenseId String?             @unique
+  isPaymentExpense   Expense?            @relation("Payer")
   // Group N-N
-  groups             Group[]            @relation("GroupUsers")
+  messages           Message[]           @relation("UserMessages")
+  sentMessages       Message[]           @relation("Sender")
+  groupMembers       Group_Members[]
+  socketConnections  Socket_Connection[]
+  Group              Group[]
 }
 
 model Otp {
   id        String   @id @default(uuid())
-  otp      String
-  expire   DateTime
+  otp       String
+  expire    DateTime
   email     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model CloudinaryStorage {
-  id                String          @id @default(uuid())
+  id                String           @id @default(uuid())
   url               String
   assetId           String
   publicId          String
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   /// Relationships
   // User 1-1
   user              User[]
   // Upload realtime
-  uploadRealtime UploadRealTime[]
+  uploadRealtime    UploadRealTime[]
   // Firebase 1-1
   firebaseSetting   FirebaseSetting? @relation(fields: [firebaseSettingId], references: [id])
   firebaseSettingId String?          @unique
@@ -90,23 +94,23 @@ model FirebaseSetting {
 }
 
 model UploadRealTime {
-  id           String       @id @default(uuid())
+  id           String             @id @default(uuid())
   title        String?
   description  String?
-  enabled      Boolean      @default(false)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  enabled      Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
   /// Relationships
   // Destination 1-1
   destinations Destination?
   // Route 1-1
-  route        Route?        @relation(fields: [routeId], references: [id])
-  routeId      String?       @unique
+  route        Route?             @relation(fields: [routeId], references: [id])
+  routeId      String?            @unique
   // Cloudinary Storage
-  fileId           String?
-  file  CloudinaryStorage? @relation(fields: [fileId], references: [id])
+  fileId       String?
+  file         CloudinaryStorage? @relation(fields: [fileId], references: [id])
   // User N-N
-  users        User[]       @relation("UploadRealTimeUsers")
+  users        User[]             @relation("UploadRealTimeUsers")
 }
 
 model Destination {
@@ -270,17 +274,54 @@ model Currencies {
   expense   Expense? @relation(fields: [expenseId], references: [id])
 }
 
+model Message {
+  message_id   String   @id @default(uuid())
+  sender_id    String
+  recipient_id String?
+  group_id     String?
+  message_text String
+  timestamp    DateTime @default(now())
+  message_type String // 'text', 'image', 'video'
+  status       String // 'delivered', 'read'
+
+  sender    User   @relation("Sender", fields: [sender_id], references: [id])
+  recipient User?  @relation("UserMessages", fields: [recipient_id], references: [id])
+  group     Group? @relation(fields: [group_id], references: [id])
+}
+
 model Group {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String          @id @default(uuid())
+  group_name   String
+  created_at   DateTime        @default(now())
+  created_by   String
   /// Relationships
   // Trip 1-N
-  trips       Trip[]
-  // User N-N
-  users       User[]   @relation("GroupUsers")
+  trips        Trip[]
+  creator      User            @relation(fields: [created_by], references: [id])
+  messages     Message[]
+  groupMembers Group_Members[]
+}
+
+model Group_Members {
+  group_id  String
+  user_id   String
+  join_date DateTime @default(now())
+  role      String // 'admin', 'member'
+
+  group Group @relation(fields: [group_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+
+  @@id([group_id, user_id]) // Composite primary key
+}
+
+model Socket_Connection {
+  user_id     String
+  socket_id   String
+  last_active DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@id([user_id, socket_id]) // Composite primary key
 }
 
 enum EType {
