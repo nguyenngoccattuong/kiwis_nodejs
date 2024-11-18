@@ -19,8 +19,6 @@ app.use(bodyParser.json());
 app.use(corsMiddleware);
 // Logger
 app.use(loggerMiddleware);
-// Error
-app.use(errorHandle);
 // Socket
 initSocketService(server);
 
@@ -38,6 +36,9 @@ app.use("/api/route", require("./routers/route.router"));
 app.use("/api/trip", require("./routers/trip.router"));
 app.use("/api/type", require("./routers/type.router"));
 app.use("/api/currencies", require("./routers/currencies.router"));
+
+// Error
+app.use(errorHandle);
 
 // Post listening
 app.listen(port, () => console.log(`Server is running on port ${port}!`));

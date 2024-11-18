@@ -10,7 +10,12 @@ const errorHandle = (error, req, res, next) =>{
     });
   }
 
-  return res.status(400).send(error.message);
+  return res.status(400).send({
+    statusCode: 400,
+    success: false,
+    message: "Error",
+    error: error.message,
+  });
 }
 
 module.exports = errorHandle;

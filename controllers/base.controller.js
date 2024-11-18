@@ -23,7 +23,7 @@ class BaseController {
   error(statusCode = 422, error = []) {
     return {
       statusCode: statusCode,
-      success: true,
+      success: false,
       message: "Error",
       error: error,
     };
