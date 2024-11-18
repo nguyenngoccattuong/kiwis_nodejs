@@ -12,7 +12,7 @@ router.post(
 );
 router.post(
   "/login",
-  tryCatch((req, res) => new Auth(req, res).login())
+  tryCatch(async (req, res) => new Auth(req, res).login())
 );
 router.post(
   "/login-with-otp",
