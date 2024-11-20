@@ -1,5 +1,6 @@
-const { adminAuth } = require("../configs/firebase_admin.config");
-
+require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const secret = process.env.JWT_SECRET;
 class BaseController {
   req;
   res;
@@ -39,8 +40,7 @@ class BaseController {
 
   async verifyIdToken() {
     const token = this.getToken();
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    return decodedToken;
+    return jwt.verify(token, secret);
   }
 
   getToken() {
@@ -55,7 +55,7 @@ class BaseController {
 
   async authUserId() {
     const decodedToken = await this.verifyIdToken();
-    return decodedToken.uid;
+    return decodedToken;
   }
 
   checkAuthHeader(auth) {
