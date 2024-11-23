@@ -16,6 +16,8 @@ datasource db {
 
 model User {
   id                 String              @id @default(uuid())
+  firstName          String
+  lastName           String
   email              String              @unique
   phone              String              @unique
   password           String
@@ -23,6 +25,7 @@ model User {
   isPublic           Boolean             @default(false)
   isAdmin            Boolean             @default(false)
   isEmailVerified    Boolean             @default(false)
+  isActive           Boolean             @default(true)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   /// Relationships

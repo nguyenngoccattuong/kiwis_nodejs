@@ -51,5 +51,10 @@ router.post(
   authMiddleware,
   tryCatch((req, res) => new Auth(req, res).changePassword())
 );
+router.post(
+  "/refresh-token",
+  authMiddleware,
+  tryCatch((req, res) => new Auth(req, res).refreshToken())
+);
 
 module.exports = router;

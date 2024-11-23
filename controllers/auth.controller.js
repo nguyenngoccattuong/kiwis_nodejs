@@ -1,4 +1,7 @@
+require("dotenv").config();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const secret = process.env.JWT_SECRET;
 
 const BaseController = require("./base.controller");
 
@@ -28,7 +31,7 @@ class AuthController extends BaseController {
    * @returns {Promise<User>}
    */
   async register() {
-    const { phone, password, email } = this.req.body;
+    const { phone, password, email, firstName, lastName } = this.req.body;
 
     // Validate the password strength
     const validationMessage = validation.checkStrength(password);
@@ -43,7 +46,15 @@ class AuthController extends BaseController {
       throw Error(validationMessage);
     }
 
-    if (!email) {
+    if (!firstName || firstName === "") {
+      throw Error("First name is required");
+    }
+
+    if (!lastName || lastName === "") {
+      throw Error("Last name is required");
+    }
+
+    if (!email || email === "") {
       throw Error("Email is required");
     }
 
@@ -51,11 +62,11 @@ class AuthController extends BaseController {
       throw Error("Email is not valid");
     }
 
-    if (!phone) {
+    if (!phone || phone === "") {
       throw Error("Phone number is required");
     }
 
-    if (!password) {
+    if (!password || password === "") {
       throw Error("Password is required");
     }
 
@@ -73,6 +84,8 @@ class AuthController extends BaseController {
       phone,
       password: await bcrypt.hashSync(password, 10),
       email,
+      firstName,
+      lastName,
     });
 
     if (createUser) {
@@ -125,6 +138,10 @@ class AuthController extends BaseController {
       throw Error("Email is not registered");
     }
 
+    if (!getUser.isActive) {
+      throw Error("Account is not active, please contact us");
+    }
+
     const oldPassword = getUser.password;
     const result = bcrypt.compareSync(password, oldPassword);
 
@@ -139,10 +156,19 @@ class AuthController extends BaseController {
       }
       throw Error("OTP sent failed");
     }
+    // Custome token firebase
+    const firebaseToken = await authService.createCustomToken(getUser.id);
+    // Generate JWT token
+    const token = this.generateToken(getUser.id);
 
-    const token = await authService.createCustomToken(getUser.id);
+    return this.response(200, {
+      firebaseToken: firebaseToken,
+      token: token,
+    });
+  }
 
-    return this.response(200, token);
+  generateToken(id) {
+    return jwt.sign({ id }, secret, { expiresIn: "7 days" });
   }
 
   async loginWithOtp() {
@@ -245,8 +271,8 @@ class AuthController extends BaseController {
    * @returns {Promise<String>}
    */
   async revokeToken() {
-    const token = this.getToken();
-    const decodedToken = await authService.revokeRefreshToken(token);
+    const uid = await this.authUserFirebaseUid();
+    const decodedToken = await authService.revokeRefreshToken(uid);
 
     if (!decodedToken) {
       return this.response(403, "Unauthorized: Token is not valid");
@@ -387,6 +413,12 @@ class AuthController extends BaseController {
       throw Error("Update password fail");
     }
     return this.response(200, "Password changed successfully");
+  }
+
+  async refreshToken() {
+    const id = await this.authUserId();
+    const decodedToken = await authService.createCustomToken(id);
+    return this.response(200, decodedToken);
   }
 }
 
