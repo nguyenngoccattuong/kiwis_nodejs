@@ -138,6 +138,10 @@ class AuthController extends BaseController {
       throw Error("Email is not registered");
     }
 
+    if (!getUser.isActive) {
+      throw Error("Account is not active, please contact us");
+    }
+
     const oldPassword = getUser.password;
     const result = bcrypt.compareSync(password, oldPassword);
 
@@ -155,12 +159,16 @@ class AuthController extends BaseController {
     // Custome token firebase
     const firebaseToken = await authService.createCustomToken(getUser.id);
     // Generate JWT token
-    const token = jwt.sign(getUser.id, secret);
+    const token = this.generateToken(getUser.id);
 
     return this.response(200, {
       firebaseToken: firebaseToken,
       token: token,
     });
+  }
+
+  generateToken(id) {
+    return jwt.sign({ id }, secret, { expiresIn: "7 days" });
   }
 
   async loginWithOtp() {
@@ -263,8 +271,8 @@ class AuthController extends BaseController {
    * @returns {Promise<String>}
    */
   async revokeToken() {
-    const token = this.getToken();
-    const decodedToken = await authService.revokeRefreshToken(token);
+    const uid = await this.authUserFirebaseUid();
+    const decodedToken = await authService.revokeRefreshToken(uid);
 
     if (!decodedToken) {
       return this.response(403, "Unauthorized: Token is not valid");

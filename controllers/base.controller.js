@@ -1,3 +1,4 @@
+const { adminAuth } = require("../configs/firebase_admin.config");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const secret = process.env.JWT_SECRET;
@@ -38,6 +39,19 @@ class BaseController {
     );
   }
 
+  // Firebase
+  async verifyIdTokenFirebase() {
+    const token = this.getToken();
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    return decodedToken;
+  }
+
+  async authUserFirebaseUid() {
+    const decodedToken = await this.verifyIdTokenFirebase();
+    return decodedToken.uid;
+  }
+
+  // Backend
   async verifyIdToken() {
     const token = this.getToken();
     return jwt.verify(token, secret);
@@ -55,7 +69,7 @@ class BaseController {
 
   async authUserId() {
     const decodedToken = await this.verifyIdToken();
-    return decodedToken;
+    return decodedToken.id;
   }
 
   checkAuthHeader(auth) {
