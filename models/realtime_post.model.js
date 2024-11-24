@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-class RealtimePostModel {
+class RealTimePostModel {
   async realtimePost(realtimePost) {
     try {
       const uploadRealTimeCreated = await prisma.realtimePost.create({
@@ -50,4 +50,4 @@ class RealtimePostModel {
   }
 }
 
-module.exports = UploadRealTimeModel;
+module.exports = RealTimePostModel;

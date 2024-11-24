@@ -1,23 +1,22 @@
-const UserService = require("../services/user.service");
+const UserModel = require("../models/user.model");
 const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
 const {
   CloudinaryFolder,
-  CloudinaryTypes,
 } = require("../enum/cloudinary.enum");
 
-const userService = new UserService();
+const userModel = new UserModel();
 const cloudinaryService = new CloudinaryService();
 
 class UserController extends BaseController {
   async currentUser() {
     const uid = await this.authUserId();
-    const user = await userService.getUserById(uid);
+    const user = await userModel.getUserById(uid);
     return this.response(200, user);
   }
 
   async findById(uid) {
-    const user = await userService.getUserById(uid);
+    const user = await userModel.getUserById(uid);
     return this.response(200, user);
   }
 
@@ -30,7 +29,7 @@ class UserController extends BaseController {
 
     const uid = await this.authUserId();
 
-    const userExists = await userService.getUserById(uid);
+    const userExists = await userModel.getUserById(uid);
     if (!userExists) {
       throw new Error("User not found");
     }
@@ -43,15 +42,15 @@ class UserController extends BaseController {
       userExists.avatarId != null ? true : false
     );
 
-    await userService.changeAvatar(uid, storageUpload.id);
-    const user = await userService.getUserById(uid);
+    await userModel.changeAvatar(uid, storageUpload.id);
+    const user = await userModel.getUserById(uid);
     return this.response(200, user);
   }
 
   async emailVerified() {
     const uid = await this.authUserId();
-    const userInfo = await userService.getUserById(uid);
-    const user = await userService.emailVerified(uid, userInfo.isEmailVerified);
+    const userInfo = await userModel.getUserById(uid);
+    const user = await userModel.emailVerified(uid, userInfo.isEmailVerified);
     return this.response(200, user);
   }
 }

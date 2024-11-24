@@ -6,13 +6,13 @@ const secret = process.env.JWT_SECRET;
 const BaseController = require("./base.controller");
 
 const AuthService = require("../services/auth.service");
-const UserService = require("../services/user.service");
+const UserModel = require("../models/user.model");
 const OtpService = require("../services/otp.service");
 const Validation = require("../helper/validation");
 
 require("dotenv").config();
 
-const userService = new UserService();
+const userModel = new UserModel();
 const authService = new AuthService();
 const otpService = new OtpService();
 const validation = new Validation();
@@ -70,17 +70,17 @@ class AuthController extends BaseController {
       throw Error("Password is required");
     }
 
-    const getUser = await userService.checkUserExistByPhone(phone);
+    const getUser = await userModel.checkUserExistByPhone(phone);
     if (getUser) {
       throw Error("Phone number is already exists");
     }
 
-    const getEmail = await userService.checkUserExistByEmail(email);
+    const getEmail = await userModel.checkUserExistByEmail(email);
     if (getEmail) {
       throw Error("Email is already exists");
     }
 
-    const createUser = await userService.createUser({
+    const createUser = await userModel.createUser({
       phone,
       password: await bcrypt.hashSync(password, 10),
       email,
@@ -132,7 +132,7 @@ class AuthController extends BaseController {
       throw Error("Password is required");
     }
 
-    const getUser = await userService.getUserByEmail(email);
+    const getUser = await userModel.getUserByEmail(email);
 
     if (getUser === null || !getUser) {
       throw Error("Email is not registered");
@@ -186,7 +186,7 @@ class AuthController extends BaseController {
       throw Error("OTP is required");
     }
 
-    const user = await userService.getUserByEmail(email);
+    const user = await userModel.getUserByEmail(email);
 
     if (!user) {
       throw Error("Email is not registered");
@@ -291,7 +291,7 @@ class AuthController extends BaseController {
       throw Error("Email is not valid");
     }
 
-    const user = await userService.getUserByEmail(email);
+    const user = await userModel.getUserByEmail(email);
 
     if (!user) {
       throw Error("Email is not registered");
@@ -335,7 +335,7 @@ class AuthController extends BaseController {
     }
 
     /// Validation email
-    const user = await userService.getUserByEmail(email);
+    const user = await userModel.getUserByEmail(email);
 
     if (!user) {
       throw Error("Email is not registered");
@@ -357,7 +357,7 @@ class AuthController extends BaseController {
       throw Error("OTP code has expired");
     }
 
-    const updatePassword = await userService.updateUser(user.id, {
+    await userModel.updateUser(user.id, {
       password: await bcrypt.hashSync(password, 10),
     });
 
@@ -398,14 +398,14 @@ class AuthController extends BaseController {
       throw Error(validationMessage);
     }
 
-    const user = await userService.getInfoUserById(await this.authUserId());
+    const user = await userModel.getInfoUserById(await this.authUserId());
     const result = bcrypt.compareSync(oldPassword, user.password);
 
     if (!result) {
       throw Error("Old password is incorrect");
     }
 
-    const updatePassword = await userService.updateUser(user.id, {
+    const updatePassword = await userModel.updateUser(user.id, {
       password: await bcrypt.hashSync(newPassword, 10),
     });
 

@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-class UserService {
+class UserModel {
   /**
    * Function to get user by id
    * @param {*} id
@@ -139,4 +139,4 @@ class UserService {
   }
 }
 
-module.exports = UserService;
+module.exports = UserModel;

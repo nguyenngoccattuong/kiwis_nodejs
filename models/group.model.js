@@ -1,4 +1,7 @@
-class GroupService {
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
+class GroupModel {
   
   async createGroup(name, createdById){
     return await prisma.group.create({
@@ -18,4 +21,4 @@ class GroupService {
   }
 }
 
-module.exports = GroupService;
+module.exports = GroupModel;
