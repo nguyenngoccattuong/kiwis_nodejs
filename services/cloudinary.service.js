@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-class CloudinaryService {
+class CloudinaryModel {
   constructor() {
     this.cloudinary = require("cloudinary").v2;
     this.cloudinary.config({
@@ -49,4 +49,4 @@ class CloudinaryService {
   }
 }
 
-module.exports = CloudinaryService;
+module.exports = CloudinaryModel;

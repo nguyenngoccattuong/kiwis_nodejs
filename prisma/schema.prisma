@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["omitApi"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -15,320 +8,168 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  firstName          String
-  lastName           String
-  email              String              @unique
-  phone              String              @unique
-  password           String
-  bio                String?
-  isPublic           Boolean             @default(false)
-  isAdmin            Boolean             @default(false)
-  isEmailVerified    Boolean             @default(false)
-  isActive           Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  /// Relationships
-  // Avatar 1-1
-  avatarId           String?
-  avatar             CloudinaryStorage?  @relation(fields: [avatarId], references: [id])
-  // Route 1-N
-  routes             Route[]
-  // Trip 1-N
-  trips              Trip[]
-  // Expense 1-N
-  expenses           Expense[]           @relation("Expenses")
-  // Notification 1-N
-  notifications      Notification[]
-  // UploadRealTime 1-N
-  uploadRealTime     UploadRealTime[]    @relation("UploadRealTimeUsers")
-  // Expense 1-1
-  isPaymentExpenseId String?             @unique
-  isPaymentExpense   Expense?            @relation("Payer")
-  // Group N-N
-  messages           Message[]           @relation("UserMessages")
-  sentMessages       Message[]           @relation("Sender")
-  groupMembers       Group_Members[]
-  socketConnections  Socket_Connection[]
-  Group              Group[]
+  userId           String           @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String           @unique
+  passwordHash     String
+  avatar           CloudinaryImage? @relation(fields: [avatarId], references: [cloudinaryImageId])
+  avatarId         String?
+  emailVerified    Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime? // Xóa mềm
+  friendships1     Friendship[]     @relation("FriendshipUser1")
+  friendships2     Friendship[]     @relation("FriendshipUser2")
+  groupMemberships GroupMember[]
+  messagesSent     Message[]        @relation("MessageSender")
+  messagesReceived Message[]        @relation("MessageReceiver")
+  realtimePosts    RealtimePost[]
+  reupPosts        ReupPost[]
+  groups           Group[]
+  sharedUsers      SharedUser[]
+  costSharings     CostSharing[]    @relation("CostSharingPayer")
 }
 
-model Otp {
-  id        String   @id @default(uuid())
-  otp       String
-  expire    DateTime
-  email     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+model Friendship {
+  friendshipId String   @id @default(cuid())
+  user1        User     @relation("FriendshipUser1", fields: [user1Id], references: [userId])
+  user1Id      String
+  user2        User     @relation("FriendshipUser2", fields: [user2Id], references: [userId])
+  user2Id      String
+  status       String   @default("pending") // 'pending', 'accepted', 'blocked'
+  createdAt    DateTime @default(now())
 
-model CloudinaryStorage {
-  id                String           @id @default(uuid())
-  url               String
-  assetId           String
-  publicId          String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  /// Relationships
-  // User 1-1
-  user              User[]
-  // Upload realtime
-  uploadRealtime    UploadRealTime[]
-  // Firebase 1-1
-  firebaseSetting   FirebaseSetting? @relation(fields: [firebaseSettingId], references: [id])
-  firebaseSettingId String?          @unique
-}
-
-model FirebaseSetting {
-  id                String             @id @default(uuid())
-  apiKey            String
-  authDomain        String
-  projectId         String
-  storageBucket     String
-  messagingSenderId String
-  appId             String
-  measurementId     String
-  enabled           Boolean            @default(false)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  /// Relationships
-  // Account Json 1-1
-  accountJson       CloudinaryStorage?
-}
-
-model UploadRealTime {
-  id           String             @id @default(uuid())
-  title        String?
-  description  String?
-  enabled      Boolean            @default(false)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  /// Relationships
-  // Destination 1-1
-  destinations Destination?
-  // Route 1-1
-  route        Route?             @relation(fields: [routeId], references: [id])
-  routeId      String?            @unique
-  // Cloudinary Storage
-  fileId       String?
-  file         CloudinaryStorage? @relation(fields: [fileId], references: [id])
-  // User N-N
-  users        User[]             @relation("UploadRealTimeUsers")
-}
-
-model Destination {
-  id               String          @id @default(uuid())
-  latitude         String
-  longitude        String
-  placeName        String
-  address          String
-  placeId          String
-  placeType        String
-  description      String?
-  mapUrl           String
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  /// Relationships
-  // Upload Real Time 1-1
-  uploadRealTimeId String?         @unique
-  uploadRealTime   UploadRealTime? @relation(fields: [uploadRealTimeId], references: [id])
-  // Route 1-1
-  route            Route           @relation(fields: [routeId], references: [id])
-  routeId          String          @unique
-  // Notification 1-N
-  notifications    Notification[]
-}
-
-model MapSettings {
-  id               String   @id @default(uuid())
-  googleMapsApiKey String
-  vietmapApiKey    String
-  geocoderApiKey   String
-  enableGoogleMaps Boolean  @default(false)
-  enableVietmap    Boolean  @default(false)
-  enableGeocoder   Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-}
-
-model Notification {
-  id            String       @id @default(uuid())
-  title         String
-  message       String
-  imageUrl      String?
-  link          String?
-  isAll         Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  /// Relationships
-  // Route 1-1
-  route         Route?
-  // User 1-1
-  userId        String?      @unique
-  user          User?        @relation(fields: [userId], references: [id])
-  // Destination 1-1
-  destinationId String?      @unique
-  destination   Destination? @relation(fields: [destinationId], references: [id])
-}
-
-model Route {
-  id             String           @id @default(uuid())
-  name           String
-  startTime      DateTime
-  endTime        DateTime
-  isCompleted    Boolean          @default(false)
-  describle      String?
-  description    String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  /// Relationships
-  // Destination 1-1
-  destination    Destination?
-  // UploadRealTime 1-N
-  uploadRealTime UploadRealTime[]
-  // User 1-1
-  userId         String?          @unique
-  user           User?            @relation(fields: [userId], references: [id])
-  // Trip 1-1
-  tripId         String?          @unique
-  trip           Trip?            @relation(fields: [tripId], references: [id])
-  // Expense 1-1
-  expenseId      String?          @unique
-  expense        Expense?         @relation(fields: [expenseId], references: [id])
-  // Notification 1-1
-  notificationId String?          @unique
-  notification   Notification?    @relation(fields: [notificationId], references: [id])
-}
-
-model Trip {
-  id              String   @id @default(uuid())
-  name            String
-  startTime       DateTime
-  endTime         DateTime
-  note            String?
-  totalDistance   String?
-  totalTime       String?
-  totalCalories   String?
-  totalCost       String?
-  startLocationId String
-  endLocationId   String
-  isCompleted     Boolean  @default(false)
-  describle       String?
-  description     String?
-  /// Relationships
-  // Route 1-N
-  route           Route[]
-  // User 1-1
-  userId          String?  @unique
-  user            User?    @relation(fields: [userId], references: [id])
-  // Group 1-1
-  groupId         String?  @unique
-  group           Group?   @relation(fields: [groupId], references: [id])
-  // Type 1-N
-  types           Type[]   @relation("TripTypes")
-}
-
-model Type {
-  id          String    @id @default(uuid())
-  type        EType
-  name        String
-  description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  /// Relationships
-  // Trip N-N
-  trips       Trip[]    @relation("TripTypes")
-  // Expense N-N
-  expenses    Expense[] @relation("ExpenseTypes")
-}
-
-model Expense {
-  id          String      @id @default(uuid())
-  name        String
-  description String?
-  amount      String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  /// Relationships
-  // Route 1-N
-  route       Route[]
-  // User 1-1
-  userId      String?     @unique
-  user        User?       @relation("Expenses", fields: [userId], references: [id])
-  // Payment Expense 1-1
-  payerId     String?     @unique
-  payer       User?       @relation("Payer", fields: [payerId], references: [id])
-  // Type N-N
-  types       Type[]      @relation("ExpenseTypes")
-  // Currency 1-1
-  currency    Currencies?
-}
-
-model Currencies {
-  id        String   @id @default(uuid())
-  name      String
-  symbol    String
-  code      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  /// Relationships
-  // Expense 1-1
-  expenseId String?  @unique
-  expense   Expense? @relation(fields: [expenseId], references: [id])
-}
-
-model Message {
-  message_id   String   @id @default(uuid())
-  sender_id    String
-  recipient_id String?
-  group_id     String?
-  message_text String
-  timestamp    DateTime @default(now())
-  message_type String // 'text', 'image', 'video'
-  status       String // 'delivered', 'read'
-
-  sender    User   @relation("Sender", fields: [sender_id], references: [id])
-  recipient User?  @relation("UserMessages", fields: [recipient_id], references: [id])
-  group     Group? @relation(fields: [group_id], references: [id])
+  @@unique([user1Id, user2Id])
 }
 
 model Group {
-  id           String          @id @default(uuid())
-  group_name   String
-  created_at   DateTime        @default(now())
-  created_by   String
-  /// Relationships
-  // Trip 1-N
-  trips        Trip[]
-  creator      User            @relation(fields: [created_by], references: [id])
-  messages     Message[]
-  groupMembers Group_Members[]
+  groupId       String         @id @default(cuid())
+  name          String
+  createdBy     User           @relation(fields: [createdById], references: [userId])
+  createdById   String
+  createdAt     DateTime       @default(now())
+  members       GroupMember[]
+  messages      Message[]
+  plans         Plan[]
+  realtimePosts RealtimePost[]
 }
 
-model Group_Members {
-  group_id  String
-  user_id   String
-  join_date DateTime @default(now())
-  role      String // 'admin', 'member'
-
-  group Group @relation(fields: [group_id], references: [id])
-  user  User  @relation(fields: [user_id], references: [id])
-
-  @@id([group_id, user_id]) // Composite primary key
+model GroupMember {
+  GroupMemberId String   @id @default(cuid())
+  group         Group    @relation(fields: [groupId], references: [groupId])
+  groupId       String
+  user          User     @relation(fields: [userId], references: [userId])
+  userId        String
+  role          String   @default("member") // 'admin', 'member'
+  joinedAt      DateTime @default(now())
 }
 
-model Socket_Connection {
-  user_id     String
-  socket_id   String
-  last_active DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id])
-
-  @@id([user_id, socket_id]) // Composite primary key
+model RealtimePost {
+  realtimePostId String            @id @default(cuid())
+  group          Group             @relation(fields: [groupId], references: [groupId])
+  groupId        String
+  user           User              @relation(fields: [userId], references: [userId])
+  userId         String
+  caption        String?
+  postedAt       DateTime          @default(now())
+  images         CloudinaryImage[] // Liên kết với các ảnh tải lên
+  reupPosts      ReupPost[]
+  deletedAt      DateTime? // Xóa mềm
 }
 
-enum EType {
-  Trip
-  Expense
-  Notification
+model CloudinaryImage {
+  cloudinaryImageId String         @id @default(cuid())
+  plan              Plan?          @relation("PlanRealtimeImages", fields: [planId], references: [planId]) // Liên kết ảnh realtime với Plan
+  planId            String?
+  publicId          String // ID của ảnh trên Cloudinary
+  imageUrl          String // URL truy cập ảnh
+  type              String // Loại ảnh: 'realtime', 'thumbnail'
+  format            String // Định dạng ảnh (jpeg, png, v.v.)
+  width             Int?
+  height            Int?
+  createdAt         DateTime       @default(now())
+  post              RealtimePost[]
+  userAvatar        User[]
+  planLocation      PlanLocation[]
+  plans             Plan[]
+}
+
+model Message {
+  messageId  String   @id @default(cuid())
+  sender     User     @relation("MessageSender", fields: [senderId], references: [userId])
+  senderId   String
+  receiver   User?    @relation("MessageReceiver", fields: [receiverId], references: [userId])
+  receiverId String?
+  group      Group?   @relation(fields: [groupId], references: [groupId])
+  groupId    String?
+  text       String?
+  type       String   @default("text") // 'text', 'image', 'realtime_image'
+  sentAt     DateTime @default(now())
+}
+
+model ReupPost {
+  reupPostId     String       @id @default(cuid())
+  originalPost   RealtimePost @relation(fields: [originalPostId], references: [realtimePostId])
+  originalPostId String
+  user           User         @relation(fields: [userId], references: [userId])
+  userId         String
+  reupAt         DateTime     @default(now())
+}
+
+model Plan {
+  planId         String            @id @default(cuid())
+  group          Group             @relation(fields: [groupId], references: [groupId])
+  groupId        String
+  name           String
+  startDate      DateTime?
+  endDate        DateTime?
+  totalCost      Float?
+  isCompleted    Boolean           @default(false) // Đánh dấu kế hoạch đã hoàn thành
+  thumbnail      CloudinaryImage?  @relation(fields: [thumbnailId], references: [cloudinaryImageId]) // Ảnh thumbnail
+  thumbnailId    String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+  realtimeImages CloudinaryImage[] @relation("PlanRealtimeImages") // Ảnh realtime trong quá trình
+  planLocations  PlanLocation[]
+  planCosts      CostSharing[]
+}
+
+model PlanLocation {
+  planLocationId String           @id @default(cuid())
+  plan           Plan             @relation(fields: [planId], references: [planId])
+  planId         String
+  name           String
+  latitude       Float?
+  longitude      Float?
+  address        String?
+  googlePlaceId  String?
+  estimatedCost  Float?
+  estimatedTime  Int? // Phút
+  isCompleted    Boolean          @default(false) // Đánh dấu chặng đã hoàn thành
+  image          CloudinaryImage? @relation(fields: [imageId], references: [cloudinaryImageId]) // Ảnh của chặng
+  imageId        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+}
+
+model CostSharing {
+  costShareId String       @id @default(cuid())
+  plan        Plan         @relation(fields: [planId], references: [planId])
+  planId      String
+  payer       User         @relation("CostSharingPayer", fields: [payerId], references: [userId])
+  payerId     String
+  amount      Float
+  sharedWith  String       @default("group") // 'group', 'individuals'
+  sharedUsers SharedUser[]
+}
+
+model SharedUser {
+  SharedUserid String      @id @default(cuid())
+  costShare    CostSharing @relation(fields: [costShareId], references: [costShareId])
+  costShareId  String
+  user         User        @relation(fields: [userId], references: [userId])
+  userId       String
 }
