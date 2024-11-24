@@ -21,22 +21,13 @@ class CloudinaryModel {
    */
 
   async uploadFile(file, folder, resourceType, public_id, destroy = false) {
-    const response = await this.cloudinary.uploader.upload(file.path, {
-      resource_type: resourceType,
-      folder: folder,
-    });
-    /// Destroy option
     if(destroy){
       await this.destroyFile(public_id);
     }
-    const cloudinaryStorage = await prisma.cloudinaryStorage.create({
-      data: {
-        url: response.secure_url,
-        assetId: response.asset_id,
-        publicId: response.public_id,
-      },
+    return await this.cloudinary.uploader.upload(file.path, {
+      resource_type: resourceType,
+      folder: folder,
     });
-    return cloudinaryStorage;
   }
 
   /**

@@ -3,10 +3,13 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 class RealTimePostModel {
-  async realtimePost(realtimePost) {
+  async createRealtimePost(data) {
     try {
       const uploadRealTimeCreated = await prisma.realtimePost.create({
-        data: realtimePost,
+        data: data,
+        include: {
+          images: true,
+        },
       });
       return uploadRealTimeCreated;
     } catch (error) {
@@ -18,6 +21,7 @@ class RealTimePostModel {
     return await prisma.realtimePost.deleteMany({
       where: {
         realtimePostId: realtimePostId,
+
       }
     });
   }
@@ -26,7 +30,17 @@ class RealTimePostModel {
     return await prisma.realtimePost.findMany({
       where: {
         userId: userId,
-      }
+        deletedAt: null,
+        isOnlyUser: true,
+      },
+      include: {
+        images: true,
+        reupPosts: {
+          where: {
+            userId: userId,
+          }
+        }
+      },
     });
   }
 
@@ -34,7 +48,11 @@ class RealTimePostModel {
     return await prisma.realtimePost.findMany({
       where: {
         groupId: groupId,
-      }
+        deletedAt: null,
+      },
+      include: {
+        images: true,
+      },
     });
   }
 

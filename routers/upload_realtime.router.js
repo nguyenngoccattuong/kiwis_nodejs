@@ -7,12 +7,30 @@ const authMiddleware = require("../middleware/auth.middleware");
 const { tryCatch } = require("../utils/trycath.util");
 
 router.post(
-  "/create",
+  "/user-create",
   authMiddleware,
   upload.single("file"),
   tryCatch((req, res) =>
-    new UploadRealTimeController(req, res).uploadRealTime()
+    new UploadRealTimeController(req, res).userUploadRealtime()
   )
+);
+
+router.get(
+  "/user-all",
+  authMiddleware,
+  tryCatch((req, res) => new UploadRealTimeController(req, res).userGetAllRealtime())
+);
+
+router.get(
+  "/group-all",
+  authMiddleware,
+  tryCatch((req, res) => new UploadRealTimeController(req, res).groupGetAllRealtime())
+);
+
+router.delete(
+  "/delete/:realtimePostId",
+  authMiddleware,
+  tryCatch((req, res) => new UploadRealTimeController(req, res).deleteUploadRealtime(req.params.realtimePostId))
 );
 
 module.exports = router;
