@@ -21,7 +21,6 @@ class RealTimePostModel {
     return await prisma.realtimePost.deleteMany({
       where: {
         realtimePostId: realtimePostId,
-
       }
     });
   }

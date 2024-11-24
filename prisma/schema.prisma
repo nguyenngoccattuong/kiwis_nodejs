@@ -31,6 +31,7 @@ model User {
   groups           Group[]
   sharedUsers      SharedUser[]
   costSharings     CostSharing[]    @relation("CostSharingPayer")
+  plans            Plan[]
 }
 
 model Friendship {
@@ -122,8 +123,10 @@ model ReupPost {
 
 model Plan {
   planId         String            @id @default(cuid())
-  group          Group             @relation(fields: [groupId], references: [groupId])
-  groupId        String
+  createdBy      User?              @relation(fields: [createdById], references: [userId]) // Người tạo trip
+  createdById    String?
+  group          Group?             @relation(fields: [groupId], references: [groupId])
+  groupId        String?
   name           String
   startDate      DateTime?
   endDate        DateTime?
