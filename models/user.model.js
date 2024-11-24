@@ -12,17 +12,13 @@ class UserModel {
     const user = await prisma.user.findUnique({
       omit: {
         email: true,
-        password: true,
+        passwordHash: true,
       },
       include: {
-        avatar:  {
-          omit: {
-            firebaseSettingId: true,
-          },
-        },
+        avatar: true,
       },
       where: {
-        id: id,
+        userId: id,
       },
     });
     return user;
@@ -92,7 +88,7 @@ class UserModel {
       data: user,
     });
     // Remove the password field before returning
-    const { password, ...userWithoutPassword } = newUser;
+    const { passwordHash, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
   }
 
@@ -124,16 +120,16 @@ class UserModel {
 
   async changeAvatar(id, cloudStorageId) {
     const userUpdated = await prisma.user.update({
-      where: { id },
+      where: { userId: id },
       data: { avatarId: cloudStorageId },
     });
     return userUpdated;
   }
 
-  async emailVerified(id, isEmailVerified) {
+  async emailVerified(id, emailVerified) {
     const updatedUser = await prisma.user.update({
-      where: { id },
-      data: { isEmailVerified: !isEmailVerified },
+      where: { userId: id },
+      data: { emailVerified: !emailVerified },
     });
     return updatedUser;
   }

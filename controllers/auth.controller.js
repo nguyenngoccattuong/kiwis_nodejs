@@ -31,10 +31,10 @@ class AuthController extends BaseController {
    * @returns {Promise<User>}
    */
   async register() {
-    const { phone, password, email, firstName, lastName } = this.req.body;
+    const { email, passwordHash, firstName, lastName } = this.req.body;
 
     // Validate the password strength
-    const validationMessage = validation.checkStrength(password);
+    const validationMessage = validation.checkStrength(passwordHash);
 
     // Check if the password is strong enough
     if (
@@ -62,18 +62,18 @@ class AuthController extends BaseController {
       throw Error("Email is not valid");
     }
 
-    if (!phone || phone === "") {
-      throw Error("Phone number is required");
-    }
+    // if (!phone || phone === "") {
+    //   throw Error("Phone number is required");
+    // }
 
-    if (!password || password === "") {
+    if (!passwordHash || passwordHash === "") {
       throw Error("Password is required");
     }
 
-    const getUser = await userModel.checkUserExistByPhone(phone);
-    if (getUser) {
-      throw Error("Phone number is already exists");
-    }
+    // const getUser = await userModel.checkUserExistByPhone(phone);
+    // if (getUser) {
+    //   throw Error("Phone number is already exists");
+    // }
 
     const getEmail = await userModel.checkUserExistByEmail(email);
     if (getEmail) {
@@ -81,8 +81,7 @@ class AuthController extends BaseController {
     }
 
     const createUser = await userModel.createUser({
-      phone,
-      password: await bcrypt.hashSync(password, 10),
+      passwordHash: await bcrypt.hashSync(passwordHash, 10),
       email,
       firstName,
       lastName,
@@ -142,14 +141,14 @@ class AuthController extends BaseController {
       throw Error("Account is not active, please contact us");
     }
 
-    const oldPassword = getUser.password;
+    const oldPassword = getUser.passwordHash;
     const result = bcrypt.compareSync(password, oldPassword);
 
     if (!result) {
       throw Error("Password is incorrect");
     }
 
-    if (getUser.isEmailVerified) {
+    if (getUser.emailVerified) {
       const otp = otpService.createOtp(getUser.email);
       if (otp) {
         return this.response(200, "OTP sent successfully");
@@ -157,9 +156,9 @@ class AuthController extends BaseController {
       throw Error("OTP sent failed");
     }
     // Custome token firebase
-    const firebaseToken = await authService.createCustomToken(getUser.id);
+    const firebaseToken = await authService.createCustomToken(getUser.userId);
     // Generate JWT token
-    const token = this.generateToken(getUser.id);
+    const token = this.generateToken(getUser.userId);
 
     return this.response(200, {
       firebaseToken: firebaseToken,
@@ -203,7 +202,7 @@ class AuthController extends BaseController {
       throw Error("OTP code has expired");
     }
 
-    const token = await authService.createCustomToken(user.id);
+    const token = await authService.createCustomToken(user.userId);
 
     await otpService.deleteOtp(user.email);
 
