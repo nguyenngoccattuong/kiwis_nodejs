@@ -102,6 +102,13 @@ class FriendShipController extends BaseController {
     );
     return this.response(200, friendships);
   }
+
+  async deleteFriendship() {
+    const userId = this.authUserId();
+    const { friendshipId } = this.req.params;
+    const friendship = await this.friendShipModel.deleteFriendship(friendshipId);
+    return this.response(200, friendship);
+  }
 }
 
 module.exports = FriendShipController;
