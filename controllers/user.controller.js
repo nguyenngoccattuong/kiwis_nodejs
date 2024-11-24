@@ -1,9 +1,7 @@
 const UserModel = require("../models/user.model");
 const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
-const {
-  CloudinaryFolder,
-} = require("../enum/cloudinary.enum");
+const { CloudinaryFolder } = require("../enum/cloudinary.enum");
 
 const userModel = new UserModel();
 const cloudinaryService = new CloudinaryService();
@@ -50,7 +48,7 @@ class UserController extends BaseController {
   async emailVerified() {
     const uid = await this.authUserId();
     const userInfo = await userModel.getUserById(uid);
-    const user = await userModel.emailVerified(uid, userInfo.isEmailVerified);
+    const user = await userModel.emailVerified(uid, userInfo.emailVerified);
     return this.response(200, user);
   }
 }
