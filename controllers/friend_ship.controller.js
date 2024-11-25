@@ -96,7 +96,7 @@ class FriendShipController extends BaseController {
   }
 
   async getFriendList() {
-    const userId = this.authUserId();
+    const userId = await this.authUserId();
     const friendships = await this.friendShipModel.findFriendshipByUserId(
       userId
     );
@@ -104,7 +104,7 @@ class FriendShipController extends BaseController {
   }
 
   async deleteFriendship() {
-    const userId = this.authUserId();
+    const userId = await this.authUserId();
     const { friendshipId } = this.req.params;
     const friendship = await this.friendShipModel.deleteFriendship(friendshipId);
     return this.response(200, friendship);
