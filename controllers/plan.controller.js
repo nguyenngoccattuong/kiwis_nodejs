@@ -165,6 +165,9 @@ class PlanController extends BaseController {
 
     return this.response(200, plan);
   }
+
+  // * The user accepts the plan
+  async acceptGoToPlan(){}
   // Plan Location //
   async addPlanLocation(planId) {
     const userId = this.authUserId();
@@ -317,6 +320,31 @@ class PlanController extends BaseController {
 
     return this.response(200, "Delete realtime image from plan successfully");
   }
+
+  async reupRealtimeInGroup(){}
+
+  // Cost sharing
+  // Note*: Nhớ add sharedUser vào: Người trả tiền cho người chi
+  async createPlanCostSharing(){}
+
+  async updatePlanCostSharing(){}
+
+  async deletePlanCostSharing(){}
+
+  async getAllCostSharingByPlanId(){}
+
+  async getAllNotPaid(){}
+
+  async getAllCostSharingByPlanLocationId(){}
+
+  async addSharedUserToCostSharing(){}
+
+  async removeUserSharedInCostSharing(){}
+
+  // Shared user
+  async updateSharedUserIsPaid(){}
+
+  async updatePaidAllPlan(){}
 
   // Check Plan Access //
   async _checkPlanAccess(planId, userId) {
