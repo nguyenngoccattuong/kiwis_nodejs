@@ -11,28 +11,28 @@ router.get(
   tryCatch((req, res) => new Group(req, res).findAll())
 );
 
-router.get(
-  "/:uid",
-  authMiddleware,
-  tryCatch((req, res) => new Group(req, res).findById(req.params.uid))
-);
-
 router.post(
   "/",
   authMiddleware,
-  tryCatch((req, res) => new Group(req, res).changeAvatar())
+  tryCatch((req, res) => new Group(req, res).createGroup())
 );
 
 router.patch(
-  "/",
+  "/group-avatar/:uid",
   authMiddleware,
-  tryCatch((req, res) => new Group(req, res).update())
+  tryCatch((req, res) => new Group(req, res).setGroupAvatar(req.params.uid))
 );
 
 router.delete(
   "/:uid",
   authMiddleware,
-  tryCatch((req, res) => new Group(req, res).update(req.params.uid))
+  tryCatch((req, res) => new Group(req, res).leaveGroup(req.params.uid))
+);
+
+router.patch(
+  "/:uid",
+  authMiddleware,
+  tryCatch((req, res) => new Group(req, res).editGroup(req.params.uid))
 );
 
 module.exports = router;

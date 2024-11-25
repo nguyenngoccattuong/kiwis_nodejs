@@ -41,7 +41,7 @@ class UploadRealTimeController extends BaseController {
   }
 
   async userGetAllRealtime() {
-    const uid = this.authUserId();
+    const uid = await this.authUserId();
     const realtimePosts = await realTimePostModel.findAllByUserId(uid);
     return this.response(200, realtimePosts);
   }
@@ -49,7 +49,7 @@ class UploadRealTimeController extends BaseController {
   async groupUploadRealtime() {
     const { caption, groupId } = this.req.body;
     const file = this.req.file;
-    const uid = this.authUserId();
+    const uid = await this.authUserId();
 
     const storageUpload = await cloudinaryService.uploadFile(
       file,
@@ -85,7 +85,7 @@ class UploadRealTimeController extends BaseController {
   }
 
   async deleteUploadRealtime(realtimePostId) {
-    const uid = this.authUserId();
+    const uid = await this.authUserId();
     const deleteUploadRealtime = await realTimePostModel.deleteById(
       realtimePostId,
       uid

@@ -52,6 +52,8 @@ model Group {
   createdBy     User           @relation(fields: [createdById], references: [userId])
   createdById   String
   createdAt     DateTime       @default(now())
+  avatar        CloudinaryImage? @relation(fields: [avatarId], references: [cloudinaryImageId])
+  avatarId      String?
   members       GroupMember[]
   messages      Message[]
   plans         Plan[]
@@ -93,6 +95,7 @@ model CloudinaryImage {
   width             Int?
   height            Int?
   createdAt         DateTime       @default(now())
+  group             Group[]
   post              RealtimePost[]
   userAvatar        User[]
   planLocation      PlanLocation[]
@@ -182,5 +185,6 @@ model SharedUser {
   costShareId  String
   user         User        @relation(fields: [userId], references: [userId])
   userId       String
+  amount       Float
   isPaid       Boolean     @default(false)
 }

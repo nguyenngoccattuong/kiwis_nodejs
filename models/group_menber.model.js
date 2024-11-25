@@ -8,6 +8,24 @@ class GroupMemberModel {
       where: { userId: userId, groupId: groupId },
     });
   }
+
+  async getGroupMemberByGroupId(groupId) {
+    return await prisma.groupMember.findMany({
+      where: { groupId: groupId },
+    });
+  }
+
+  async deleteGroupMember(userId, groupId) {
+    return await prisma.groupMember.delete({
+      where: { userId: userId, groupId: groupId },
+    });
+  }
+
+  async checkIsMenberInGroup(userId, groupId) {
+    return await prisma.groupMember.findFirst({
+      where: { userId: userId, groupId: groupId },
+    });
+  }
 }
 
 module.exports = GroupMemberModel;
