@@ -5,25 +5,11 @@ class GroupController extends BaseController{
     super(req, res, next);
   }
   
-  async create(){
+  async createGroup(){}
 
-  }
+  async editGroup(){}
 
-  async findAll(){
-
-  }
-
-  async findById(uid){
-
-  }
-
-  async update(uid){
-
-  }
-
-  async delete(){
-
-  }
+  async leaveGroup(){}
 }
 
 module.exports = GroupController;

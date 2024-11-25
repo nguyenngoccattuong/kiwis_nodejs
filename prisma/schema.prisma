@@ -159,6 +159,7 @@ model PlanLocation {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
+  costSharings   CostSharing[]
 }
 
 model CostSharing {
@@ -167,6 +168,9 @@ model CostSharing {
   planId      String
   payer       User         @relation("CostSharingPayer", fields: [payerId], references: [userId])
   payerId     String
+  note        String?
+  planLocation PlanLocation? @relation(fields: [planLocationId], references: [planLocationId])
+  planLocationId String?
   amount      Float
   sharedWith  String       @default("group") // 'group', 'individuals'
   sharedUsers SharedUser[]
@@ -178,4 +182,5 @@ model SharedUser {
   costShareId  String
   user         User        @relation(fields: [userId], references: [userId])
   userId       String
+  isPaid       Boolean     @default(false)
 }
