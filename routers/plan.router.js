@@ -7,19 +7,19 @@ const authMiddleware = require("../middleware/auth.middleware");
 const { tryCatch } = require("../utils/trycath.util");
 
 router.post(
-  "/create",
+  "/",
   authMiddleware,
   tryCatch((req, res) => new PlanController(req, res).createPlan())
 );
 
 router.get(
-  "/user-all",
+  "/",
   authMiddleware,
   tryCatch((req, res) => new PlanController(req, res).findAllPlansByUserId())
 );
 
 router.get(
-  "/group-all/:groupId",
+  "/group/:groupId",
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).findAllPlansByGroupId(req.params.groupId)
@@ -51,7 +51,7 @@ router.delete(
 );
 
 router.put(
-  "/:planId/set-completed",
+  "/completed/:planId",
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).setPlanCompleted(req.params.planId)
@@ -59,7 +59,7 @@ router.put(
 );
 
 router.post(
-  "/:planId/add-location",
+  "/location/:planId",
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).addPlanLocation(req.params.planId)
@@ -67,7 +67,7 @@ router.post(
 );
 
 router.put(
-  "/:planId/update-location/:planLocationId",
+  "/location/:planLocationId",
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).updatePlanLocation(req.params.planLocationId)
@@ -75,7 +75,7 @@ router.put(
 );
 
 router.delete(
-  "/:planId/delete-location/:planLocationId",
+  "/location/:planLocationId",
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).deletePlanLocation(req.params.planLocationId)
@@ -83,7 +83,7 @@ router.delete(
 );
 
 router.post(
-  "/:planId/add-realtime-image",
+  "/post/:planId",
   authMiddleware,
   upload.single("file"),
   tryCatch((req, res) =>
@@ -92,7 +92,7 @@ router.post(
 );
 
 router.delete(
-  "/:planId/delete-realtime-image/:realtimePostId",
+  "/post/:realtimePostId",
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).deleteRealtimeImageFromPlan(
