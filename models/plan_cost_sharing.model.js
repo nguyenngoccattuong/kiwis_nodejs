@@ -8,6 +8,12 @@ class PlanCostSharingModel {
       data: data,
     });
   }
+
+  async findCostSharingById(costShareId){
+    return await prisma.costSharing.findUnique({
+      where: { costShareId: costShareId },
+    });
+  }
 }
 
 module.exports = PlanCostSharingModel;

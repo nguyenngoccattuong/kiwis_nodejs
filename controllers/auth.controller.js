@@ -31,10 +31,10 @@ class AuthController extends BaseController {
    * @returns {Promise<User>}
    */
   async register() {
-    const { email, passwordHash, firstName, lastName } = this.req.body;
+    const { email, password, firstName, lastName } = this.req.body;
 
     // Validate the password strength
-    const validationMessage = validation.checkStrength(passwordHash);
+    const validationMessage = validation.checkStrength(password);
 
     // Check if the password is strong enough
     if (
@@ -62,18 +62,9 @@ class AuthController extends BaseController {
       throw Error("Email is not valid");
     }
 
-    // if (!phone || phone === "") {
-    //   throw Error("Phone number is required");
-    // }
-
-    if (!passwordHash || passwordHash === "") {
+    if (!password || password === "") {
       throw Error("Password is required");
     }
-
-    // const getUser = await userModel.checkUserExistByPhone(phone);
-    // if (getUser) {
-    //   throw Error("Phone number is already exists");
-    // }
 
     const getEmail = await userModel.checkUserExistByEmail(email);
     if (getEmail) {
@@ -81,7 +72,7 @@ class AuthController extends BaseController {
     }
 
     const createUser = await userModel.createUser({
-      passwordHash: await bcrypt.hashSync(passwordHash, 10),
+      passwordHash: await bcrypt.hashSync(password, 10),
       email,
       firstName,
       lastName,

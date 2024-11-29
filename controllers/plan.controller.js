@@ -454,10 +454,80 @@ class PlanController extends BaseController {
     return this.response(200, planCostSharing);
   }
 
-  async updatePlanCostSharing() {
-    //   const userId = await this.authUserId();
-    //   const { planCostSharingId, amount } = this.req.body;
-    //   await this._checkPlanAccess(planId, userId);
+  async updatePlanCostSharing(){
+    const userId = await this.authUserId();
+    const {
+      costShareId,
+      planLocationId,
+      amount,
+      payerId,
+      planId,
+      note,
+      sharedWith,
+      individualShares,
+    } = this.req.body;
+
+    await this._checkPlanAccess(planId, userId);
+
+    const existingCostShare = await this.planCostSharingModel.findCostSharingById(costShareId);
+    if (!existingCostShare) {
+      throw new Error("Cost sharing record not found");
+    }
+
+    if (planLocationId) {
+      const exitPlanLocation = await this.planLocationModel.findPlanLocationById(planLocationId);
+      if (!exitPlanLocation) {
+        throw new Error("Plan location not found");
+      }
+    }
+
+    let finalAmount = amount || existingCostShare.amount; 
+
+    if (sharedWith === "group") {
+      if (amount !== undefined && (typeof amount !== "number" || amount <= 0)) {
+        throw new Error("Amount must be a positive number for group sharing");
+      }
+    } else if (sharedWith === "individuals") {
+      if (!Array.isArray(individualShares) || individualShares.length === 0) {
+        throw new Error("Individual shares must be a non-empty array");
+      }
+
+      finalAmount = individualShares.reduce((sum, share) => {
+        if (!share.userId || typeof share.amount !== "number" || share.amount <= 0) {
+          throw new Error("Each individual share must include a valid userId and positive amount");
+        }
+        return sum + share.amount;
+      }, 0);
+    } else {
+      throw new Error("Invalid sharedWith value. Must be 'group' or 'individuals'");
+    }
+
+    const data = {
+      planLocationId: planLocationId || existingCostShare.planLocationId,
+      amount: finalAmount,
+      payerId: payerId || existingCostShare.payerId,
+      note: note || existingCostShare.note,
+      sharedWith: sharedWith || existingCostShare.sharedWith,
+    };
+
+    const updatedCostSharing = await this.planCostSharingModel.updatePlanCostSharing(costShareId, data);
+
+    if (sharedWith === "individuals") {
+      // Xóa các bản ghi `SharedUser` hiện tại
+      await this.planCostSharingModel.deleteSharedUsersByCostShareId(costShareId);
+
+      // Thêm mới danh sách `SharedUser`
+      await this.planCostSharingModel.createSharedUsers(
+        costShareId,
+        individualShares.map((share) => ({
+          userId: share.userId,
+          amount: share.amount,
+        }))
+      );
+    }
+
+    // 8. Trả về kết quả
+    return this.response(200, updatedCostSharing);
   }
 
   async deletePlanCostSharing() {}
