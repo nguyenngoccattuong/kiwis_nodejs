@@ -21,64 +21,84 @@ router.get(
 router.get(
   "/group-all/:groupId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).findAllPlansByGroupId(req.params.groupId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).findAllPlansByGroupId(req.params.groupId)
+  )
 );
 
 router.get(
   "/:planId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).findPlanById(req.params.planId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).findPlanById(req.params.planId)
+  )
 );
 
 router.put(
   "/:planId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).updatePlan(req.params.planId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).updatePlan(req.params.planId)
+  )
 );
 
 router.delete(
   "/:planId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).deletePlan(req.params.planId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).deletePlan(req.params.planId)
+  )
 );
 
 router.put(
   "/:planId/set-completed",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).setPlanCompleted(req.params.planId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).setPlanCompleted(req.params.planId)
+  )
 );
 
 router.post(
   "/:planId/add-location",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).addPlanLocation(req.params.planId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).addPlanLocation(req.params.planId)
+  )
 );
 
 router.put(
   "/:planId/update-location/:planLocationId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).updatePlanLocation(req.params.planLocationId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).updatePlanLocation(req.params.planLocationId)
+  )
 );
 
 router.delete(
   "/:planId/delete-location/:planLocationId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).deletePlanLocation(req.params.planLocationId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).deletePlanLocation(req.params.planLocationId)
+  )
 );
 
 router.post(
   "/:planId/add-realtime-image",
   authMiddleware,
   upload.single("file"),
-  tryCatch((req, res) => new PlanController(req, res).addRealtimeImageToPlan(req.params.planId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).addRealtimeImageToPlan(req.params.planId)
+  )
 );
 
 router.delete(
   "/:planId/delete-realtime-image/:realtimePostId",
   authMiddleware,
-  tryCatch((req, res) => new PlanController(req, res).deleteRealtimeImageFromPlan(req.params.realtimePostId))
+  tryCatch((req, res) =>
+    new PlanController(req, res).deleteRealtimeImageFromPlan(
+      req.params.realtimePostId
+    )
+  )
 );
-
-
 
 module.exports = router;

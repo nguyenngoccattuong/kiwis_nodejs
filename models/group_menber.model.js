@@ -26,6 +26,12 @@ class GroupMemberModel {
       where: { userId: userId, groupId: groupId },
     });
   }
+
+  async createGroupMembers(data) {
+    return await prisma.groupMember.createMany({
+      data: data,
+    });
+  }
 }
 
 module.exports = GroupMemberModel;
