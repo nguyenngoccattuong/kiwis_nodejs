@@ -3,9 +3,12 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 class PlanLocationModel {
-  async createPlanLocation(planId, data) {
+  async createPlanLocation(data) {
     return await prisma.planLocation.create({
       data: data,
+      include: {
+        plan: true,
+      },
     });
   }
 

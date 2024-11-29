@@ -306,10 +306,17 @@ class PlanController extends BaseController {
   }
 
   async deletePlanLocation(planLocationId) {
-    // const userId = await this.authUserId();
-    // await this._checkPlanAccess(planId, userId);
-    // await this.planLocationModel.deletePlanLocation(planLocationId);
-    // return this.response(200, "Delete plan location successfully");
+    const userId = await this.authUserId();
+
+    const planLocation = await this.planLocationModel.findPlanLocationById(
+      planLocationId
+    );
+
+    await this._checkPlanAccess(planLocation.planId, userId);
+
+    await this.planLocationModel.deletePlanLocation(planLocationId);
+
+    return this.response(200, "Delete plan location successfully");
   }
 
   // Realtime Image //
@@ -317,13 +324,13 @@ class PlanController extends BaseController {
     const userId = await this.authUserId();
     const file = this.req.file;
 
+    if (!file) {
+      throw Error("File is required");
+    }
+
     const plan = await this._checkPlanAccess(planId, userId);
     if (plan.isCompleted) {
       throw Error("You can't add realtime image to a completed plan");
-    }
-
-    if (!file) {
-      throw Error("File is required");
     }
 
     const storageUpload = await this.cloudinaryService.uploadFile(
@@ -354,16 +361,19 @@ class PlanController extends BaseController {
   async deleteRealtimeImageFromPlan(realtimePostId) {
     const userId = await this.authUserId();
 
-    const realtimePost = await this._checkPlanAccess(realtimePostId, userId);
-
+    // Lấy realtime post trước
+    const realtimePost = await this.realTimePostModel.findById(realtimePostId);
     if (!realtimePost) {
       throw Error("Realtime post not found");
     }
 
-    if (realtimePost.plan.isCompleted) {
+    // Kiểm tra quyền truy cập plan
+    const plan = await this._checkPlanAccess(realtimePost.planId, userId);
+    if (plan.isCompleted) {
       throw Error("You can't delete realtime image from a completed plan");
     }
 
+    // Xóa ảnh
     await this.realTimePostModel.deleteById(realtimePostId);
 
     return this.response(200, "Delete realtime image from plan successfully");
@@ -454,7 +464,7 @@ class PlanController extends BaseController {
     return this.response(200, planCostSharing);
   }
 
-  async updatePlanCostSharing(){
+  async updatePlanCostSharing() {
     const userId = await this.authUserId();
     const {
       costShareId,
@@ -469,19 +479,21 @@ class PlanController extends BaseController {
 
     await this._checkPlanAccess(planId, userId);
 
-    const existingCostShare = await this.planCostSharingModel.findCostSharingById(costShareId);
+    const existingCostShare =
+      await this.planCostSharingModel.findCostSharingById(costShareId);
     if (!existingCostShare) {
       throw new Error("Cost sharing record not found");
     }
 
     if (planLocationId) {
-      const exitPlanLocation = await this.planLocationModel.findPlanLocationById(planLocationId);
+      const exitPlanLocation =
+        await this.planLocationModel.findPlanLocationById(planLocationId);
       if (!exitPlanLocation) {
         throw new Error("Plan location not found");
       }
     }
 
-    let finalAmount = amount || existingCostShare.amount; 
+    let finalAmount = amount || existingCostShare.amount;
 
     if (sharedWith === "group") {
       if (amount !== undefined && (typeof amount !== "number" || amount <= 0)) {
@@ -493,13 +505,21 @@ class PlanController extends BaseController {
       }
 
       finalAmount = individualShares.reduce((sum, share) => {
-        if (!share.userId || typeof share.amount !== "number" || share.amount <= 0) {
-          throw new Error("Each individual share must include a valid userId and positive amount");
+        if (
+          !share.userId ||
+          typeof share.amount !== "number" ||
+          share.amount <= 0
+        ) {
+          throw new Error(
+            "Each individual share must include a valid userId and positive amount"
+          );
         }
         return sum + share.amount;
       }, 0);
     } else {
-      throw new Error("Invalid sharedWith value. Must be 'group' or 'individuals'");
+      throw new Error(
+        "Invalid sharedWith value. Must be 'group' or 'individuals'"
+      );
     }
 
     const data = {
@@ -510,11 +530,14 @@ class PlanController extends BaseController {
       sharedWith: sharedWith || existingCostShare.sharedWith,
     };
 
-    const updatedCostSharing = await this.planCostSharingModel.updatePlanCostSharing(costShareId, data);
+    const updatedCostSharing =
+      await this.planCostSharingModel.updatePlanCostSharing(costShareId, data);
 
     if (sharedWith === "individuals") {
       // Xóa các bản ghi `SharedUser` hiện tại
-      await this.planCostSharingModel.deleteSharedUsersByCostShareId(costShareId);
+      await this.planCostSharingModel.deleteSharedUsersByCostShareId(
+        costShareId
+      );
 
       // Thêm mới danh sách `SharedUser`
       await this.planCostSharingModel.createSharedUsers(
