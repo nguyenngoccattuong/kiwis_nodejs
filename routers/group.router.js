@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../middleware/multer.middleware");
 
 const Group = require("../controllers/group.controller");
 const { tryCatch } = require("../utils/trycath.util");
@@ -19,6 +20,7 @@ router.post(
 
 router.patch(
   "/group-avatar/:uid",
+  upload.single("file"),
   authMiddleware,
   tryCatch((req, res) => new Group(req, res).setGroupAvatar(req.params.uid))
 );

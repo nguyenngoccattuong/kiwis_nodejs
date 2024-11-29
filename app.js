@@ -1,5 +1,5 @@
 const express = require("express");
-const http = require('http');
+const http = require("http");
 const bodyParser = require("body-parser");
 // Midleware
 const corsMiddleware = require("./middleware/corn.middleware");
@@ -28,6 +28,7 @@ app.use("/api/user", require("./routers/user.router"));
 app.use("/api/upload-realtime", require("./routers/upload_realtime.router"));
 app.use("/api/group", require("./routers/group.router"));
 app.use("/api/notification", require("./routers/notification.router"));
+app.use("/api/plan", require("./routers/plan.router"));
 
 // Error
 app.use(errorHandle);

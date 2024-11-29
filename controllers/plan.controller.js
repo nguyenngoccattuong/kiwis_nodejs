@@ -3,7 +3,7 @@ const GroupModel = require("../models/group.model");
 const GroupMemberModel = require("../models/group_menber.model");
 const PlanLocationModel = require("../models/plan_location.model");
 const CloudinaryService = require("../services/cloudinary.service");
-const CloudinaryFolder = require("../helper/cloudinary");
+const CloudinaryFolder = require("../enum/cloudinary.enum");
 const RealTimePostModel = require("../models/realtime_post.model");
 const PlanCostSharingModel = require("../models/plan_cost_sharing.model");
 const BaseController = require("./base.controller");
@@ -28,23 +28,30 @@ class PlanController extends BaseController {
       throw Error("Name is required");
     }
 
-    if (totalCost && totalCost instanceof Number) {
-      throw Error("Total cost must be numbers");
+    if (totalCost && (typeof totalCost !== "number" || isNaN(totalCost))) {
+      throw Error("Total cost must be a valid number");
     }
 
     if (totalCost && totalCost < 0) {
       throw Error("Total cost must be greater than 0");
     }
 
-    if (startDate && startDate instanceof Date) {
-      throw Error("Start date must be a date");
-    }
+    const parseDate = (date) => {
+      const parsed = Date.parse(date);
+      if (isNaN(parsed)) {
+        throw Error(`Invalid date format: ${date}`);
+      }
+      return new Date(parsed);
+    };
 
-    if (endDate && endDate instanceof Date) {
-      throw Error("End date must be a date");
-    }
+    const formattedStartDate = startDate ? parseDate(startDate) : null;
+    const formattedEndDate = endDate ? parseDate(endDate) : null;
 
-    if (startDate && endDate && startDate > endDate) {
+    if (
+      formattedStartDate &&
+      formattedEndDate &&
+      formattedStartDate > formattedEndDate
+    ) {
       throw Error("Start date must be before end date");
     }
 
@@ -59,8 +66,8 @@ class PlanController extends BaseController {
       createdById: userId,
       groupId,
       name,
-      startDate,
-      endDate,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
       totalCost,
     });
 
@@ -79,7 +86,10 @@ class PlanController extends BaseController {
     const userId = await this.authUserId();
     const { groupId } = this.req.params;
 
-    const groupMember = await this.groupMemberModel.exitUserFromGroup(userId, groupId);
+    const groupMember = await this.groupMemberModel.exitUserFromGroup(
+      userId,
+      groupId
+    );
     if (!groupMember) {
       throw Error("You are not a member of this group");
     }
@@ -105,7 +115,7 @@ class PlanController extends BaseController {
 
   async updatePlan(planId) {
     const userId = await this.authUserId();
-    const { name, startDate, endDate, totalCost } = this.req.body;
+    let { name, startDate, endDate, totalCost } = this.req.body;
 
     await this._checkPlanAccess(planId, userId);
 
@@ -113,30 +123,40 @@ class PlanController extends BaseController {
       throw Error("Name is required");
     }
 
-    if (totalCost && totalCost instanceof Number) {
-      throw Error("Total cost must be numbers");
+    if (totalCost) {
+      totalCost = Number(totalCost);
+      if (isNaN(totalCost)) {
+        throw Error("Total cost must be a valid number");
+      }
     }
 
     if (totalCost && totalCost < 0) {
       throw Error("Total cost must be greater than 0");
     }
 
-    if (startDate && startDate instanceof Date) {
-      throw Error("Start date must be a date");
-    }
+    const parseDate = (date) => {
+      const parsed = Date.parse(date);
+      if (isNaN(parsed)) {
+        throw Error(`Invalid date format: ${date}`);
+      }
+      return new Date(parsed);
+    };
 
-    if (endDate && endDate instanceof Date) {
-      throw Error("End date must be a date");
-    }
+    const formattedStartDate = startDate ? parseDate(startDate) : null;
+    const formattedEndDate = endDate ? parseDate(endDate) : null;
 
-    if (startDate && endDate && startDate > endDate) {
+    if (
+      formattedStartDate &&
+      formattedEndDate &&
+      formattedStartDate > formattedEndDate
+    ) {
       throw Error("Start date must be before end date");
     }
 
     const plan = await this.planModel.updatePlan(planId, {
       name,
-      startDate,
-      endDate,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
       totalCost,
     });
 
@@ -145,9 +165,9 @@ class PlanController extends BaseController {
 
   async deletePlan(planId) {
     const userId = await this.authUserId();
-    
+
     const plan = await this._checkPlanAccess(planId, userId);
-    
+
     if (plan.isCompleted) {
       throw Error("You can't delete a completed plan");
     }
@@ -170,11 +190,19 @@ class PlanController extends BaseController {
   }
 
   // * The user accepts the plan
-  async acceptGoToPlan(){}
+  async acceptGoToPlan() {}
   // Plan Location //
   async addPlanLocation(planId) {
     const userId = await this.authUserId();
-    const { name, latitude, longitude, address, googlePlaceId, estimatedCost, estimatedTime } = this.req.body;
+    const {
+      name,
+      latitude,
+      longitude,
+      address,
+      googlePlaceId,
+      estimatedCost,
+      estimatedTime,
+    } = this.req.body;
 
     await this._checkPlanAccess(planId, userId);
 
@@ -194,7 +222,7 @@ class PlanController extends BaseController {
       throw Error("Estimated time must be numbers");
     }
 
-    if (estimatedTime && estimatedTime  < 0) {
+    if (estimatedTime && estimatedTime < 0) {
       throw Error("Estimated time must be greater than 0");
     }
 
@@ -202,7 +230,7 @@ class PlanController extends BaseController {
       throw Error("Estimated cost must be greater than 0");
     }
 
-    const planLocation = await this.planLocationModel.createPlanLocation( {
+    const planLocation = await this.planLocationModel.createPlanLocation({
       planId,
       name,
       latitude,
@@ -218,10 +246,20 @@ class PlanController extends BaseController {
 
   async updatePlanLocation(planLocationId) {
     const userId = await this.authUserId();
-    const { name, latitude, longitude, address, googlePlaceId, estimatedCost, estimatedTime } = this.req.body;
+    const {
+      name,
+      latitude,
+      longitude,
+      address,
+      googlePlaceId,
+      estimatedCost,
+      estimatedTime,
+    } = this.req.body;
 
-    const planLocation = await this.planLocationModel.findPlanLocationById(planLocationId);
-    if(!planLocation){
+    const planLocation = await this.planLocationModel.findPlanLocationById(
+      planLocationId
+    );
+    if (!planLocation) {
       throw Error("Plan location not found");
     }
 
@@ -243,7 +281,7 @@ class PlanController extends BaseController {
       throw Error("Estimated time must be numbers");
     }
 
-    if (estimatedTime && estimatedTime  < 0) {
+    if (estimatedTime && estimatedTime < 0) {
       throw Error("Estimated time must be greater than 0");
     }
 
@@ -251,26 +289,26 @@ class PlanController extends BaseController {
       throw Error("Estimated cost must be greater than 0");
     }
 
-    const result = await this.planLocationModel.updatePlanLocation(planLocationId, {
-      name,
-      latitude,
-      longitude,
-      address,
-      googlePlaceId,
-      estimatedCost,
-      estimatedTime,
-    });
+    const result = await this.planLocationModel.updatePlanLocation(
+      planLocationId,
+      {
+        name,
+        latitude,
+        longitude,
+        address,
+        googlePlaceId,
+        estimatedCost,
+        estimatedTime,
+      }
+    );
 
     return this.response(200, result);
   }
 
   async deletePlanLocation(planLocationId) {
     // const userId = await this.authUserId();
-
     // await this._checkPlanAccess(planId, userId);
-
     // await this.planLocationModel.deletePlanLocation(planLocationId);
-
     // return this.response(200, "Delete plan location successfully");
   }
 
@@ -304,9 +342,11 @@ class PlanController extends BaseController {
       width: storageUpload.width,
       height: storageUpload.height,
       type: "realtime",
-    }
+    };
 
-    const realtimePost = await this.realTimePostModel.createRealtimePost(create);
+    const realtimePost = await this.realTimePostModel.createRealtimePost(
+      create
+    );
 
     return this.response(200, realtimePost);
   }
@@ -329,28 +369,37 @@ class PlanController extends BaseController {
     return this.response(200, "Delete realtime image from plan successfully");
   }
 
-  async reupRealtimeInGroup(){}
+  async reupRealtimeInGroup() {}
 
   // Cost sharing
   // Note*: Nhớ add sharedUser vào: Người trả tiền cho người chi
-  async createPlanCostSharing(){
+  async createPlanCostSharing() {
     const userId = await this.authUserId();
-    const { planLocationId, amount , payerId, planId, note, sharedWith, individualShares} = this.req.body;
+    const {
+      planLocationId,
+      amount,
+      payerId,
+      planId,
+      note,
+      sharedWith,
+      individualShares,
+    } = this.req.body;
 
     const plan = await this._checkPlanAccess(planId, userId);
 
-    if(planLocationId){
-      const exitPlanLocation = await this.planLocationModel.findPlanLocationById(planLocationId);
-      if(!exitPlanLocation){
+    if (planLocationId) {
+      const exitPlanLocation =
+        await this.planLocationModel.findPlanLocationById(planLocationId);
+      if (!exitPlanLocation) {
         throw Error("Plan location not found");
       }
     }
 
-    if(amount && amount < 0){
+    if (amount && amount < 0) {
       throw Error("Amount must be greater than 0");
     }
 
-    if(amount instanceof Number){
+    if (amount instanceof Number) {
       throw Error("Amount must be a number");
     }
 
@@ -372,13 +421,21 @@ class PlanController extends BaseController {
 
       // Tính tổng tiền từ `individualShares`
       finalAmount = individualShares.reduce((sum, share) => {
-        if (!share.userId || typeof share.amount !== "number" || share.amount <= 0) {
-          throw new Error("Each individual share must include a valid userId and positive amount");
+        if (
+          !share.userId ||
+          typeof share.amount !== "number" ||
+          share.amount <= 0
+        ) {
+          throw new Error(
+            "Each individual share must include a valid userId and positive amount"
+          );
         }
         return sum + share.amount;
       }, 0);
     } else {
-      throw new Error("Invalid sharedWith value. Must be 'group' or 'individuals'");
+      throw new Error(
+        "Invalid sharedWith value. Must be 'group' or 'individuals'"
+      );
     }
 
     const data = {
@@ -391,35 +448,34 @@ class PlanController extends BaseController {
       sharedUsers: sharedWith === "individuals" ? individualShares : [],
     };
 
+    const planCostSharing =
+      await this.planCostSharingModel.createPlanCostSharing(data);
 
-    const planCostSharing = await this.planCostSharingModel.createPlanCostSharing(data);
-      
     return this.response(200, planCostSharing);
   }
 
-  async updatePlanCostSharing(){
-  //   const userId = await this.authUserId();
-  //   const { planCostSharingId, amount } = this.req.body;
-
-  //   await this._checkPlanAccess(planId, userId);
+  async updatePlanCostSharing() {
+    //   const userId = await this.authUserId();
+    //   const { planCostSharingId, amount } = this.req.body;
+    //   await this._checkPlanAccess(planId, userId);
   }
 
-  async deletePlanCostSharing(){}
+  async deletePlanCostSharing() {}
 
-  async getAllCostSharingByPlanId(){}
+  async getAllCostSharingByPlanId() {}
 
-  async getAllNotPaid(){}
+  async getAllNotPaid() {}
 
-  async getAllCostSharingByPlanLocationId(){}
+  async getAllCostSharingByPlanLocationId() {}
 
-  async addSharedUserToCostSharing(){}
+  async addSharedUserToCostSharing() {}
 
-  async removeUserSharedInCostSharing(){}
+  async removeUserSharedInCostSharing() {}
 
   // Shared user
-  async updateSharedUserIsPaid(){}
+  async updateSharedUserIsPaid() {}
 
-  async updatePaidAllPlan(){}
+  async updatePaidAllPlan() {}
 
   // Check Plan Access //
   async _checkPlanAccess(planId, userId) {
@@ -428,9 +484,12 @@ class PlanController extends BaseController {
       throw Error("Plan not found");
     }
 
-    if(plan.groupId){
+    if (plan.groupId) {
       const group = await this.groupModel.findGroupById(plan.groupId);
-      const groupMember = await this.groupMemberModel.exitUserFromGroup(userId, group.groupId);
+      const groupMember = await this.groupMemberModel.exitUserFromGroup(
+        userId,
+        group.groupId
+      );
       if (plan.createdById !== userId && !groupMember) {
         throw Error("You can't access this plan");
       }
