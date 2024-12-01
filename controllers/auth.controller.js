@@ -140,7 +140,7 @@ class AuthController extends BaseController {
     }
 
     if (getUser.emailVerified) {
-      const otp = otpService.createOtp(getUser.email);
+      const otp = otpService.createOtp(getUser.email, getUser.userId);
       if (otp) {
         return this.response(200, "OTP sent successfully");
       }
@@ -203,7 +203,9 @@ class AuthController extends BaseController {
   async resendOtp() {
     const { email } = this.req.body;
 
-    const otp = otpService.createOtp(email);
+    const user = await userModel.getUserByEmail(email);
+
+    const otp = otpService.createOtp(email, user.userId);
     if (otp) {
       return this.response(200, "OTP sent successfully");
     }
@@ -294,7 +296,7 @@ class AuthController extends BaseController {
       await otpService.deleteOtp(user.email);
     }
 
-    const otp = otpService.createOtp(user.email);
+    const otp = otpService.createOtp(user.email, userId);
     if (otp) {
       return this.response(200, "Email sent successfully");
     }

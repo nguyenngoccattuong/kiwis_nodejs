@@ -31,14 +31,14 @@ class OtpService {
     }
   }
 
-  async createOtp(email) {
+  async createOtp(email, userId) {
     try {
       const otp = this.generateOtp();
       await this.sendOtp(email, otp);
       const hashedOtp = await bcrypt.hashSync(otp, 10);
       const otpTime = Date.now() + 3 * 60 * 1000; // Hết hạn sau 3 phút
       const otpCreated = await prisma.otp.create({
-        data: { email, otp: hashedOtp, expire: new Date(otpTime) },
+        data: { email, otp: hashedOtp, expire: new Date(otpTime), userId: userId },
       });
       return otpCreated;
     } catch (err) {
@@ -62,6 +62,15 @@ class OtpService {
   async getOtpByEmail(email) {
     return await prisma.otp.findFirst({
       where: { email },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  async getOtpByUserId(userId){
+    return await prisma.otp.findFirst({
+      where: { userId },
       orderBy: {
         createdAt: "desc",
       },

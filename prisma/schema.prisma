@@ -32,6 +32,11 @@ model User {
   sharedUsers      SharedUser[]
   costSharings     CostSharing[]    @relation("CostSharingPayer")
   plans            Plan[]
+  otps             Otp[]
+  realtimeComments RealtimeComment[]
+  userPostEmotions UserPost_Emotion[]
+  userPostSaves    UserPost_Save[]
+  postFeeds        PostFeed[]
 }
 
 model Friendship {
@@ -47,11 +52,11 @@ model Friendship {
 }
 
 model Group {
-  groupId       String         @id @default(cuid())
+  groupId       String           @id @default(cuid())
   name          String
-  createdBy     User           @relation(fields: [createdById], references: [userId])
+  createdBy     User             @relation(fields: [createdById], references: [userId])
   createdById   String
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime         @default(now())
   avatar        CloudinaryImage? @relation(fields: [avatarId], references: [cloudinaryImageId])
   avatarId      String?
   members       GroupMember[]
@@ -72,16 +77,30 @@ model GroupMember {
 
 model RealtimePost {
   realtimePostId String            @id @default(cuid())
-  group          Group?             @relation(fields: [groupId], references: [groupId])
+  group          Group?            @relation(fields: [groupId], references: [groupId])
   groupId        String?
   user           User              @relation(fields: [userId], references: [userId])
   userId         String
   caption        String?
   postedAt       DateTime          @default(now())
-  images         CloudinaryImage[] // Liên kết với các ảnh tải lên
+  images         CloudinaryImage[]
   reupPosts      ReupPost[]
-  deletedAt      DateTime? // Xóa mềm
-  isOnlyUser     Boolean           @default(true) // Chỉ hiển thị cho user đăng
+  deletedAt      DateTime?
+  realtimeComments RealtimeComment[]
+  userPostEmotions UserPost_Emotion[]
+  userPostSaves UserPost_Save[]
+  postFeeds PostFeed[]
+}
+
+model RealtimeComment {
+  realtimeCommentId String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [userId])
+  userId            String
+  post              RealtimePost @relation(fields: [realtimePostId], references: [realtimePostId])
+  realtimePostId    String
+  message           Message?     @relation(fields: [messageId], references: [messageId])
+  messageId         String?
+  createdAt         DateTime     @default(now())
 }
 
 model CloudinaryImage {
@@ -111,8 +130,9 @@ model Message {
   group      Group?   @relation(fields: [groupId], references: [groupId])
   groupId    String?
   text       String?
-  type       String   @default("text") // 'text', 'image', 'realtime_image'
+  type       MessageType   @default(TEXT)
   sentAt     DateTime @default(now())
+  realtimeComment RealtimeComment[]
 }
 
 model ReupPost {
@@ -124,11 +144,22 @@ model ReupPost {
   reupAt         DateTime     @default(now())
 }
 
+model PostFeed {
+  userId    String 
+  user     User   @relation(fields: [userId], references: [userId])
+  postId    String  
+  post     RealtimePost @relation(fields: [postId], references: [realtimePostId])
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+  @@index([userId, createdAt])
+}
+
 model Plan {
   planId         String            @id @default(cuid())
-  createdBy      User?              @relation(fields: [createdById], references: [userId]) // Người tạo trip
+  createdBy      User?             @relation(fields: [createdById], references: [userId]) // Người tạo trip
   createdById    String?
-  group          Group?             @relation(fields: [groupId], references: [groupId])
+  group          Group?            @relation(fields: [groupId], references: [groupId])
   groupId        String?
   name           String
   startDate      DateTime?
@@ -166,17 +197,17 @@ model PlanLocation {
 }
 
 model CostSharing {
-  costShareId String       @id @default(cuid())
-  plan        Plan         @relation(fields: [planId], references: [planId])
-  planId      String
-  payer       User         @relation("CostSharingPayer", fields: [payerId], references: [userId])
-  payerId     String
-  note        String?
-  planLocation PlanLocation? @relation(fields: [planLocationId], references: [planLocationId])
+  costShareId    String        @id @default(cuid())
+  plan           Plan          @relation(fields: [planId], references: [planId])
+  planId         String
+  payer          User          @relation("CostSharingPayer", fields: [payerId], references: [userId])
+  payerId        String
+  note           String?
+  planLocation   PlanLocation? @relation(fields: [planLocationId], references: [planLocationId])
   planLocationId String?
-  amount      Float
-  sharedWith  String       @default("group") // 'group', 'individuals'
-  sharedUsers SharedUser[]
+  amount         Float
+  sharedWith     CostSharingSharedWith @default(GROUP)
+  sharedUsers    SharedUser[]
 }
 
 model SharedUser {
@@ -187,4 +218,54 @@ model SharedUser {
   userId       String
   amount       Float
   isPaid       Boolean     @default(false)
+}
+
+model Otp {
+  otpId String @id @default(cuid())
+  code String
+  user User? @relation(fields: [userId], references: [userId])
+  userId String?
+  otpType  OtpType
+  exprire  DateTime
+  isUsed   Boolean @default(false)
+  email    String
+  createdAt DateTime @default(now())
+}
+
+model UserPost_Emotion {
+  emotion String
+  post RealtimePost @relation(fields: [postId], references: [realtimePostId])
+  postId String
+  user User @relation(fields: [userId], references: [userId])
+  userId String
+  createdAt DateTime @default(now())
+  status String @default("active") // 'active', 'inactive'
+
+  @@unique([postId, userId])
+}
+
+model UserPost_Save {
+  post RealtimePost @relation(fields: [postId], references: [realtimePostId])
+  postId String
+  user User @relation(fields: [userId], references: [userId])
+  userId String
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+enum CostSharingSharedWith {
+  GROUP
+  INDIVIDUALS
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  REALTIME_IMAGE
+}
+
+enum OtpType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
 }

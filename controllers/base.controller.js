@@ -1,4 +1,5 @@
 const { adminAuth } = require("../configs/firebase_admin.config");
+const UserModel = require("../models/user.model");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const secret = process.env.JWT_SECRET;
@@ -11,6 +12,7 @@ class BaseController {
     this.req = req;
     this.res = res;
     this.next = next;
+    this.userModel = new UserModel();
   }
 
   success(statusCode = 200, data = []) {
@@ -69,7 +71,11 @@ class BaseController {
 
   async authUserId() {
     const decodedToken = await this.verifyIdToken();
-    return decodedToken.id;
+    const user = await this.userModel.getUserById(decodedToken.id);
+    if (!user) {
+      throw new Error("Unauthorized: User not found");
+    }
+    return user.userId;
   }
 
   checkAuthHeader(auth) {

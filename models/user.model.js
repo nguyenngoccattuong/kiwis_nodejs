@@ -11,16 +11,20 @@ class UserModel {
   async getUserById(id) {
     const user = await prisma.user.findUnique({
       omit: {
-        email: true,
         passwordHash: true,
+        avatarId: true,
       },
       include: {
         avatar: true,
+        groups: true,
+        plans: true,
+        postFeeds: true,
       },
       where: {
         userId: id,
       },
     });
+
     return user;
   }
 

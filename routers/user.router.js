@@ -14,7 +14,7 @@ router.get(
   tryCatch((req, res) => new User(req, res).currentUser())
 );
 router.get(
-  "/:uid",
+  "/current/:uid",
   authMiddleware,
   tryCatch((req, res) => new User(req, res).findById(req.params.uid))
 );

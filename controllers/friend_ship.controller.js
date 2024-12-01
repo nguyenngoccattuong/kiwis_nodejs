@@ -31,11 +31,11 @@ class FriendShipController extends BaseController {
       friendId
     );
 
-    if (isFriend.status === "accepted") {
+    if (isFriend && isFriend.status === "accepted") {
       throw Error("You are already friends");
     }
 
-    if (isFriend.status === "pending") {
+    if (isFriend && isFriend.status === "pending") {
       throw Error(
         "You are waiting for this user to accept your friend request"
       );
