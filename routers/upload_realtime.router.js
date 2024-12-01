@@ -7,7 +7,7 @@ const authMiddleware = require("../middleware/auth.middleware");
 const { tryCatch } = require("../utils/trycath.util");
 
 router.post(
-  "/user-create",
+  "/",
   authMiddleware,
   upload.single("file"),
   tryCatch((req, res) =>
@@ -16,7 +16,7 @@ router.post(
 );
 
 router.get(
-  "/user-all",
+  "/",
   authMiddleware,
   tryCatch((req, res) => new UploadRealTimeController(req, res).userGetAllRealtime())
 );

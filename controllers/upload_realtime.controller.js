@@ -1,10 +1,14 @@
 const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
 const RealTimePostModel = require("../models/realtime_post.model");
+const FriendShipModel = require("../models/friend_ship.model");
+const PostFeedModel = require("../models/post_feed.model");
 const { CloudinaryFolder } = require("../enum/cloudinary.enum");
 
 const cloudinaryService = new CloudinaryService();
 const realTimePostModel = new RealTimePostModel();
+const friendModel = new FriendShipModel();
+const postFeedModel = new PostFeedModel();
 class UploadRealTimeController extends BaseController {
   constructor(req, res, next) {
     super(req, res, next);
@@ -37,12 +41,37 @@ class UploadRealTimeController extends BaseController {
       },
     };
     const uploadRealTime = await realTimePostModel.createRealtimePost(data);
+
+    const friends = await friendModel.findFriendshipByUserId(uid);
+
+    const feedData = friends.map(friend => ({
+      userId: friend.user.userId, 
+      postId: uploadRealTime.realtimePostId, 
+      createdAt: new Date(),   
+    }));
+
+    feedData.push({
+      userId: uid, 
+      postId: uploadRealTime.realtimePostId,
+      createdAt: new Date(),
+    });
+
+    await postFeedModel.createManyPostFeed(feedData);
+
+
     return this.response(200, uploadRealTime);
   }
 
   async userGetAllRealtime() {
     const uid = await this.authUserId();
-    const realtimePosts = await realTimePostModel.findAllByUserId(uid);
+    const realtimePosts = await postFeedModel.getPostFeedByUserId(uid);
+    return this.response(200, realtimePosts);
+  }
+
+
+  async userGetAllFriendPost() {
+    const uid = await this.authUserId();
+    const realtimePosts = await realTimePostModel.findAllFriendPost(uid);
     return this.response(200, realtimePosts);
   }
 

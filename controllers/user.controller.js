@@ -1,10 +1,12 @@
 const UserModel = require("../models/user.model");
 const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
+const CloudinaryImageModel = require("../models/cloudinary_image.model");
 const { CloudinaryFolder } = require("../enum/cloudinary.enum");
 
 const userModel = new UserModel();
 const cloudinaryService = new CloudinaryService();
+const cloudinaryImageModel = new CloudinaryImageModel();
 
 class UserController extends BaseController {
   async currentUser() {
@@ -40,7 +42,16 @@ class UserController extends BaseController {
       userExists.avatarId != null ? true : false
     );
 
-    await userModel.changeAvatar(uid, storageUpload.id);
+    const cloudinaryImage = await cloudinaryImageModel.createCloudinaryImage({
+      publicId: storageUpload.public_id,
+      imageUrl: storageUpload.secure_url,
+      type: "avatar",
+      format: storageUpload.format,
+      width: storageUpload.width,
+      height: storageUpload.height,
+    });
+
+    await userModel.changeAvatar(uid, cloudinaryImage.cloudinaryImageId);
     const user = await userModel.getUserById(uid);
     return this.response(200, user);
   }
