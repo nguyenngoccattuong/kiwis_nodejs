@@ -3,16 +3,22 @@ const BaseController = require("./base.controller");
 const CloudinaryService = require("../services/cloudinary.service");
 const CloudinaryImageModel = require("../models/cloudinary_image.model");
 const { CloudinaryFolder } = require("../enum/cloudinary.enum");
+const FriendShipModel = require("../models/friend_ship.model");
 
 const userModel = new UserModel();
 const cloudinaryService = new CloudinaryService();
 const cloudinaryImageModel = new CloudinaryImageModel();
-
+const friendShipModel = new FriendShipModel();
 class UserController extends BaseController {
   async currentUser() {
     const uid = await this.authUserId();
     const user = await userModel.getUserById(uid);
-    return this.response(200, user);
+    const friendShip = await friendShipModel.findFriendshipByUserId(uid);
+    const userWithFriends = {
+      ...user,
+      friends: friendShip,
+    };
+    return this.response(200, userWithFriends);
   }
 
   async findById(uid) {

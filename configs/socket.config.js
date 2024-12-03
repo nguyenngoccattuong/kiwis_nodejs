@@ -1,13 +1,10 @@
-const socketIo = require('socket.io');
+const { Server } = require('socket.io');
+const socketPort = process.env.SOCKET_PORT;
+
 
 function configureSocket(server) {
-  const io = socketIo(server, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
-  });
-
+  console.log('Create server socket');
+  const io = new Server(socketPort, server);
   return io;
 }
 

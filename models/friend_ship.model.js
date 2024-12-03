@@ -85,11 +85,10 @@ class FriendShipModel {
     });
   }
 
-  async updateFriendship(userId, friendId, data) {
+  async updateFriendship(friendshipId, data) {
     return await prisma.friendship.update({
       where: {
-        user2Id: userId,
-        user1Id: friendId,
+        friendshipId: friendshipId,
       },
       data: data,
     });

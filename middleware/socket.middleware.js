@@ -6,16 +6,17 @@ async function socketConnectionHandler(socket, io) {
   console.log('a user connected:', socket.id);
 
   // Register socket ID in the database
-  socket.on('register', async (userId) => {
+  socket.on('register', async (data) => {
+    console.log('register', data);
     try {
-      await prisma.socket_Connection.create({
+      await prisma.socketConnection.create({
         data: {
-          user_id: userId,
-          socket_id: socket.id,
-          last_active: new Date(),
+          userId: data.userId,
+          socketId: socket.id,
+          lastActive: new Date(),
         },
       });
-      console.log(`User ${userId} connected with socket ID ${socket.id}`);
+      console.log(`User ${data} connected with socket ID ${socket.id}`);
     } catch (err) {
       console.error(err);
     }
@@ -27,20 +28,20 @@ async function socketConnectionHandler(socket, io) {
       const message = await prisma.message.create({
         data: {
           sender_id: senderId,
-          recipient_id: recipientId,
-          message_text: messageText,
-          message_type: 'text',
+          recipientId: recipientId,
+          messageText: messageText,
+          messageType: 'text',
           status: 'delivered',
         },
       });
 
       // Send the message to the recipient's socket
-      const recipientSocket = await prisma.socket_Connection.findUnique({
-        where: { user_id: recipientId },
+      const recipientSocket = await prisma.socketConnection.findUnique({
+        where: { userId: recipientId },
       });
 
       if (recipientSocket) {
-        io.to(recipientSocket.socket_id).emit('receive_message', message);
+        io.to(recipientSocket.socketId).emit('receive_message', message);
         console.log(`Message sent to user ${recipientId}:`, message);
       }
     } catch (err) {
@@ -53,27 +54,26 @@ async function socketConnectionHandler(socket, io) {
     try {
       const message = await prisma.message.create({
         data: {
-          sender_id: senderId,
-          group_id: groupId,
-          message_text: messageText,
-          message_type: 'text',
-          status: 'delivered',
+          senderId: senderId,
+          groupId: groupId,
+          text: messageText,
+          type: 'TEXT',
         },
       });
 
       // Send the message to all members of the group
-      const groupMembers = await prisma.group_Members.findMany({
-        where: { group_id: groupId },
+      const groupMembers = await prisma.groupMember.findMany({
+        where: { groupId: groupId },
         include: { user: true },
       });
 
       groupMembers.forEach(async (member) => {
-        const memberSocket = await prisma.socket_Connection.findUnique({
-          where: { user_id: member.user_id },
+        const memberSocket = await prisma.socketConnection.findUnique({
+          where: { userId: member.userId },
         });
 
         if (memberSocket) {
-          io.to(memberSocket.socket_id).emit('receive_group_message', message);
+          io.to(memberSocket.socketId).emit('receive_group_message', message);
           console.log(`Message sent to group ${groupId}:`, message);
         }
       });
@@ -85,11 +85,15 @@ async function socketConnectionHandler(socket, io) {
   // Handle socket disconnection
   socket.on('disconnect', async () => {
     console.log('a user disconnected:', socket.id);
-
-    // Remove the socket connection from the database
-    await prisma.socket_Connection.delete({
-      where: { socket_id: socket.id },
-    });
+    // const socketConnection = await prisma.socketConnection.findUnique({
+    //   where: { socketId: socket.id },
+    // });
+    // if (socketConnection) {
+    //   // Remove the socket connection from the database
+    //   await prisma.socketConnection.delete({
+    //     where: { socketId: socket.id },
+    //   });
+    // }
   });
 }
 

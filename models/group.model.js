@@ -4,13 +4,71 @@ const prisma = new PrismaClient();
 class GroupModel {
   async createGroup(data) {
     return await prisma.group.create({
-      data: data,
+      data: {
+        ...data,
+        members: {
+          create: data.members.map((member) => ({
+            userId: member.userId,
+            role: member.role || "DEFAULT", // Vai trò mặc định
+          })),
+        },
+      },
     });
   }
 
-  async findGroupById(groupId) {
+  async findGroupById(groupId, userId) {
     return await prisma.group.findUnique({
       where: { groupId: groupId },
+      omit: {
+        avatarId: true,
+      },
+      include: {
+        avatar: true,
+        createdBy: true,
+        members: {
+          where: {
+            userId: {
+              not: userId,
+            },
+          },
+          include: {
+            user: {
+              omit: {
+                avatarId: true,
+                passwordHash: true,
+                isActive: true,
+                deletedAt: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              include: {
+                avatar: true,
+              },
+            },
+          },
+        },
+        messages: {
+          include: {
+            sender: {
+              omit: {
+                avatarId: true,
+                passwordHash: true,
+                isActive: true,
+                deletedAt: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              include: {
+                avatar: true,
+              },
+            },
+          },
+        },
+        plans: true,
+        realtimePosts: true,
+      },
     });
   }
 
@@ -41,6 +99,9 @@ class GroupModel {
     return await prisma.groupMember.findMany({
       where: {
         userId: userId,
+      },
+      include: {
+        group: true,
       },
     });
   }

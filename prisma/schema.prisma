@@ -37,6 +37,7 @@ model User {
   userPostEmotions UserPost_Emotion[]
   userPostSaves    UserPost_Save[]
   postFeeds        PostFeed[]
+  socketConnections SocketConnection[]
 }
 
 model Friendship {
@@ -49,16 +50,18 @@ model Friendship {
   createdAt    DateTime @default(now())
 
   @@unique([user1Id, user2Id])
+  @@index([user1Id, user2Id])
 }
 
-model Group {
+model Group { // Có thể là user to user hoặc group
   groupId       String           @id @default(cuid())
-  name          String
-  createdBy     User             @relation(fields: [createdById], references: [userId])
-  createdById   String
+  name          String?
+  createdBy     User?             @relation(fields: [createdById], references: [userId])
+  createdById   String?
   createdAt     DateTime         @default(now())
   avatar        CloudinaryImage? @relation(fields: [avatarId], references: [cloudinaryImageId])
   avatarId      String?
+  type          GroupType @default(DEFAULT)
   members       GroupMember[]
   messages      Message[]
   plans         Plan[]
@@ -66,13 +69,14 @@ model Group {
 }
 
 model GroupMember {
-  GroupMemberId String   @id @default(cuid())
   group         Group    @relation(fields: [groupId], references: [groupId])
   groupId       String
   user          User     @relation(fields: [userId], references: [userId])
   userId        String
-  role          String   @default("member") // 'admin', 'member'
+  role          GroupMemberRole   @default(DEFAULT)
   joinedAt      DateTime @default(now())
+
+  @@id([groupId, userId])
 }
 
 model RealtimePost {
@@ -254,9 +258,30 @@ model UserPost_Save {
   @@unique([postId, userId])
 }
 
+model SocketConnection {
+  socketId   String
+  userId     String
+  lastActive DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@id([userId, socketId]) // Composite primary key
+}
+
+enum GroupType {
+  DEFAULT // user to user
+  GROUP // group
+}
+
 enum CostSharingSharedWith {
   GROUP
   INDIVIDUALS
+}
+
+enum GroupMemberRole {
+  ADMIN
+  MEMBER
+  DEFAULT // user to user
 }
 
 enum MessageType {
