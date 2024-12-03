@@ -5,8 +5,18 @@ const errorHandle = (error, req, res, next) =>{
   if(error instanceof AppError){
     return res.status(200).json({
       statusCode: error.statusCode,
+      success: false,
       message: "Error",
       error: error,
+    });
+  }
+
+  if (error instanceof Error) {
+    return res.status(200).json({
+      statusCode: 400,
+      success: false,
+      message: "Error",
+      error: error.message,
     });
   }
 
@@ -14,7 +24,7 @@ const errorHandle = (error, req, res, next) =>{
     statusCode: 400,
     success: false,
     message: "Error",
-    error: error.message,
+    error: "Server Error",
   });
 }
 

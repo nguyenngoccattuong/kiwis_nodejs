@@ -16,13 +16,54 @@ class PostFeedModel {
   }
   
   async getPostFeedByUserId(userId) {
-    return await prisma.postFeed.findMany({
+    const result = await prisma.postFeed.findMany({
       where: { userId },
+      omit: { 
+        postId: true, 
+        userId: true 
+      },
       include: {
-        post: true,
+        post: {
+          omit: {
+            userId: true,
+          },
+          include: {
+            images: {
+              omit: {
+                cloudinaryImageId: true,
+                planId: true,
+              },
+              include: {
+                plan: true,
+                planLocation: true,
+              }
+            },
+            user: {
+              omit: {
+                avatarId: true,
+                passwordHash: true,
+                isActive: true,
+                deletedAt: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              include: {
+                avatar: {
+                  omit: {
+                    cloudinaryImageId: true,
+                    createdAt: true,
+                    planId: true,
+                  },
+                },
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
+    return result.map((item) => item.post);
   }
 
   async deletePostFeed(userId, postId) {

@@ -5,12 +5,14 @@ const bodyParser = require("body-parser");
 const corsMiddleware = require("./middleware/corn.middleware");
 const loggerMiddleware = require("./middleware/logger.middleware");
 const errorHandle = require("./middleware/error.middleware");
-const { initSocketService } = require("./services/socket.service");
+const socketConnectionHandler = require("./middleware/socket.middleware");
+const { Server } = require('socket.io');
 
 require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
 const port = process.env.APP_PORT;
+const socketPort = process.env.SOCKET_PORT;
 
 // Body parser
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -20,7 +22,12 @@ app.use(corsMiddleware);
 // Logger
 app.use(loggerMiddleware);
 // Socket
-initSocketService(server);
+const io = new Server(socketPort, server);
+io.on('connection', (socket) => {
+  console.log('a user connected: ' + socket.id);
+  socketConnectionHandler(socket, io);
+});
+
 
 // Route
 app.use("/api/auth", require("./routers/auth.router"));

@@ -1,5 +1,6 @@
 const BaseController = require("./base.controller");
 const FriendShipModel = require("../models/friend_ship.model");
+const GroupModel = require("../models/group.model");
 const UserModel = require("../models/user.model");
 
 class FriendShipController extends BaseController {
@@ -7,6 +8,7 @@ class FriendShipController extends BaseController {
     super(req, res);
     this.friendShipModel = new FriendShipModel();
     this.userModel = new UserModel();
+    this.groupModel = new GroupModel();
   }
 
   async addFriend() {
@@ -86,12 +88,23 @@ class FriendShipController extends BaseController {
     }
 
     const friendship = await this.friendShipModel.updateFriendship(
-      friendshipId,
-      userId,
+      isReplyFriend.friendshipId,
       {
         status: "accepted",
       }
     );
+
+    /// Create group
+    await this.groupModel.createGroup({
+      members: [
+        {
+        userId: userId,
+        },
+        {
+          userId: friendshipId,
+        },
+      ],
+    });
     return this.response(200, friendship);
   }
 

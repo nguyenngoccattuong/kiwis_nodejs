@@ -116,7 +116,7 @@ class GroupController extends BaseController {
 
     const result = await Promise.all(
       groups.map(async (group) => {
-        return await this.groupModel.findGroupById(group.groupId);
+        return await this.groupModel.findGroupById(group.groupId, uid);
       })
     );
 
