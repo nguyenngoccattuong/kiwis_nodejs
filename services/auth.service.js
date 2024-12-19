@@ -64,26 +64,6 @@ class AuthService {
     }
   }
 
-  /**
-   * Function to send a notification to a specific FCM user
-   * @param {*} token
-   * @param {*} title
-   * @param {*} body
-   * @returns {Promise<void>}
-   */
-  async sendNotification(token, title, body) {
-    try {
-      const response = await admin.messaging().send({
-        token,
-        title,
-        body,
-      });
-      return response;
-    } catch (error) {
-      console.log("Error in sendNotification", error);
-      throw new Error("Fail to send a notification");
-    }
-  }
 }
 
 module.exports = AuthService;

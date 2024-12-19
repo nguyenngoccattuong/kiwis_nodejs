@@ -7,7 +7,7 @@ class Validation {
   };
 
   checkStrength(pass) {
-    if (pass.length > 15) {
+    if (pass.length > 30) {
       return "Password is too lengthy";
     } else if (pass.length < 8) {
       return "Password is too short";

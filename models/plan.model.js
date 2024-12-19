@@ -11,8 +11,8 @@ class PlanModel {
         group: true,
         thumbnail: true,
         realtimeImages: true,
-        planLocations: true,
         planCosts: true,
+        tasks: true,
       },
     });
   }
@@ -20,12 +20,25 @@ class PlanModel {
   async findAllPlansByUserId(userId) {
     return await prisma.plan.findMany({
       where: { createdById: userId },
+      include: {
+        createdBy: true,
+        group: true,
+        tasks: true,
+      },
     });
   }
 
   async findAllPlansByGroupId(groupId) {
     return await prisma.plan.findMany({
       where: { groupId: groupId },
+      include: {
+        createdBy: true,
+        group: true,
+        thumbnail: true,
+        realtimeImages: true,
+        planCosts: true,
+        tasks: true,
+      },
     });
   }
 
@@ -39,7 +52,11 @@ class PlanModel {
         group: true,
         thumbnail: true,
         realtimeImages: true,
-        planLocations: true,
+        tasks: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
         planCosts: true,
       },
     });
@@ -54,8 +71,8 @@ class PlanModel {
         group: true,
         thumbnail: true,
         realtimeImages: true,
-        planLocations: true,
         planCosts: true,
+        tasks: true,
       },
     });
   }
@@ -68,8 +85,8 @@ class PlanModel {
         group: true,
         thumbnail: true,
         realtimeImages: true,
-        planLocations: true,
         planCosts: true,
+        tasks: true,
       },
     });
   }

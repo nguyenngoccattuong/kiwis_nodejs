@@ -3,6 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 class GroupModel {
   async createGroup(data) {
+    console.log(data);
     return await prisma.group.create({
       data: {
         ...data,
@@ -50,6 +51,20 @@ class GroupModel {
         },
         messages: {
           include: {
+            post:{
+              include: {
+                images: {
+                  omit: {
+                    cloudinaryImageId: true,
+                    planId: true,
+                  },
+                  include: {
+                    plan: true,
+                    planLocation: true,
+                  }
+                },
+              },
+            },
             sender: {
               omit: {
                 avatarId: true,
@@ -110,6 +125,13 @@ class GroupModel {
     return await prisma.group.update({
       where: { groupId: groupId },
       data: data,
+      omit: {
+        avatarId: true,
+      },
+      include: {
+        avatar: true,
+        createdBy: true,
+      },
     });
   }
 

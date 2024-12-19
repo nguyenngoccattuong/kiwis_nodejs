@@ -52,6 +52,17 @@ router.post(
   tryCatch((req, res) => new Auth(req, res).changePassword())
 );
 router.post(
+  "/delete-account",
+  authMiddleware,
+  tryCatch((req, res) => new Auth(req, res).deleteAccount())
+);
+
+router.post(
+  "/change-password",
+  authMiddleware,
+  tryCatch((req, res) => new Auth(req, res).changePassword())
+);
+router.post(
   "/refresh-token",
   authMiddleware,
   tryCatch((req, res) => new Auth(req, res).refreshToken())
