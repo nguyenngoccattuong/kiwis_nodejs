@@ -30,6 +30,18 @@ router.post(
   tryCatch((req, res) => new User(req, res).emailVerified())
 );
 
+router.put(
+  "/update-user",
+  authMiddleware,
+  tryCatch((req, res) => new User(req, res).updateUser())
+);
+
+router.put(
+  "/update-fcm-token",
+  authMiddleware,
+  tryCatch((req, res) => new User(req, res).updateFCMToken())
+);
+
 // Friend
 router.post(
   "/friend",

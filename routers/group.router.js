@@ -18,7 +18,7 @@ router.post(
   tryCatch((req, res) => new Group(req, res).createGroup())
 );
 
-router.patch(
+router.put(
   "/group-avatar/:uid",
   upload.single("file"),
   authMiddleware,
@@ -31,8 +31,9 @@ router.delete(
   tryCatch((req, res) => new Group(req, res).leaveGroup(req.params.uid))
 );
 
-router.patch(
+router.put(
   "/:uid",
+  upload.single("file"),
   authMiddleware,
   tryCatch((req, res) => new Group(req, res).editGroup(req.params.uid))
 );

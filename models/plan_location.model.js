@@ -43,6 +43,31 @@ class PlanLocationModel {
       data: { isCompleted: true },
     });
   }
+
+  async updateAllPlanLocation(planId, data) {
+    return await prisma.planLocation.updateMany({
+      where: { planId: planId },
+      data: {
+        p
+      },
+    });
+  }
+
+  async deleteAllPlanLocationsByPlanId(planId) {
+    return await prisma.planLocation.deleteMany({
+      where: { planId: planId },
+    });
+  }
+
+  async createPlanLocations(planId, data) {
+    const locations = data.map(location => ({
+      ...location,
+      planId,
+    }));
+    return await prisma.planLocation.createMany({
+      data: locations,
+    });
+  }
 }
 
 module.exports = PlanLocationModel;

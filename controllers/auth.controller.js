@@ -128,8 +128,8 @@ class AuthController extends BaseController {
       throw Error("Email is not registered");
     }
 
-    if (!getUser.isActive) {
-      throw Error("Account is not active, please contact us");
+    if (getUser.deletedAt) {
+      throw Error("Account is deleted");
     }
 
     const oldPassword = getUser.passwordHash;
@@ -391,14 +391,14 @@ class AuthController extends BaseController {
     }
 
     const user = await userModel.getInfoUserById(await this.authUserId());
-    const result = bcrypt.compareSync(oldPassword, user.password);
+    const result = bcrypt.compareSync(oldPassword, user.passwordHash);
 
     if (!result) {
       throw Error("Old password is incorrect");
     }
 
-    const updatePassword = await userModel.updateUser(user.id, {
-      password: await bcrypt.hashSync(newPassword, 10),
+    const updatePassword = await userModel.updateUser(user.userId, {
+      passwordHash: await bcrypt.hashSync(newPassword, 10),
     });
 
     if (!updatePassword) {
@@ -411,6 +411,12 @@ class AuthController extends BaseController {
     const id = await this.authUserId();
     const decodedToken = await authService.createCustomToken(id);
     return this.response(200, decodedToken);
+  }
+
+  async deleteAccount() {
+    const id = await this.authUserId();
+    const deleteUser = await userModel.deleteUser(id);
+    return this.response(200, "Delete account successfully");
   }
 }
 

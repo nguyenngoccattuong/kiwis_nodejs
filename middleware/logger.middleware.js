@@ -25,10 +25,25 @@ const logger = createLogger({
 const loggerMiddleware = (req, res, next) => {
   const method = req.method;
   const url = req.originalUrl;
+  const ip = req.ip;
+  const userAgent = req.get('user-agent');
+  const body = JSON.stringify(req.body);
+  const query = JSON.stringify(req.query);
 
   res.on('finish', () => {
     const statusCode = res.statusCode;
-    logger.info(`${method} ${url} - ${statusCode}`);
+    const logMessage = [
+      `Method: ${method}`,
+      `URL: ${url}`, 
+      `Status: ${statusCode}`,
+      `IP: ${ip}`,
+      `User-Agent: ${userAgent}`,
+      `Query Params: ${query}`,
+      `Body: ${body}`,
+      '-----'
+    ].join('\n');
+
+    logger.info(logMessage);
   });
 
   next();

@@ -8,6 +8,7 @@ class RealTimePostModel {
       const uploadRealTimeCreated = await prisma.realtimePost.create({
         data: data,
         include: {
+          user: true,
           images: true,
         },
       });
@@ -39,6 +40,18 @@ class RealTimePostModel {
             userId: userId,
           }
         }
+      },
+    });
+  }
+
+  async findById(realtimePostId){
+    return await prisma.realtimePost.findUnique({
+      where: {
+        realtimePostId: realtimePostId,
+      },
+      include: {
+        user: true,
+        images: true,
       },
     });
   }

@@ -28,6 +28,8 @@ class GroupController extends BaseController {
     const data = {
       name,
       createdById: uid,
+      members,
+      type: members.length > 2 ? "GROUP" : "DEFAULT",
     };
 
     const group = await this.groupModel.createGroup(data);
@@ -35,6 +37,13 @@ class GroupController extends BaseController {
     let memberData = [];
     if (members) {
       memberData = members.map((member) => {
+        if (member.userId === uid) {
+          return {
+            groupId: group.groupId,
+            userId: member,
+            role: "ADMIN",
+          };
+        }
         return {
           groupId: group.groupId,
           userId: member,
@@ -49,17 +58,37 @@ class GroupController extends BaseController {
 
   async editGroup(groupId) {
     const { name } = this.req.body;
+    const file = this.req.file;
     const uid = await this.authUserId();
-
+    let cloudinaryImage;
     await this._checkIsMenberInGroup(uid, groupId);
 
+    const group = await this.groupModel.findGroupById(groupId);
+    if (group.avatar) {
+      await this.cloudinaryService.destroyFile(group.avatar.publicId);
+      cloudinaryImage = await this.cloudinaryService.uploadFile(file);
+
+    } else {
+      cloudinaryImage = await this.cloudinaryService.uploadFile(file);
+    }
+
+    const cloudinaryImageData =
+      await this.cloudinaryImageModel.createCloudinaryImage({
+        publicId: cloudinaryImage.public_id,
+        imageUrl: cloudinaryImage.secure_url,
+        type: "avatar",
+        format: cloudinaryImage.format,
+        width: cloudinaryImage.width,
+        height: cloudinaryImage.height,
+      });
     const data = {
       name: name,
+      avatarId: cloudinaryImageData.cloudinaryImageId,
     };
 
-    await this.groupModel.updateGroup(groupId, data);
+    const groupRes = await this.groupModel.updateGroup(groupId, data);
 
-    return this.response(200, "Group updated successfully");
+    return this.response(200, groupRes);
   }
 
   async setGroupAvatar(groupId) {
@@ -98,7 +127,7 @@ class GroupController extends BaseController {
 
     await this._checkIsMenberInGroup(uid, groupId);
 
-    const result = await this.groupMemberModel.exitUserFromGroup(uid, groupId);
+    const result = await this.groupMemberModel.existUserFromGroup(uid, groupId);
 
     if (!result) {
       throw Error("User not found in group");

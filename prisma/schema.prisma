@@ -18,6 +18,7 @@ model User {
   avatarId         String?
   isActive         Boolean          @default(true)
   emailVerified    Boolean          @default(false)
+  fcmToken         String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   deletedAt        DateTime? // Xóa mềm
@@ -33,12 +34,12 @@ model User {
   costSharings     CostSharing[]    @relation("CostSharingPayer")
   plans            Plan[]
   otps             Otp[]
-  realtimeComments RealtimeComment[]
   userPostEmotions UserPost_Emotion[]
   userPostSaves    UserPost_Save[]
   postFeeds        PostFeed[]
   socketConnections SocketConnection[]
 }
+
 
 model Friendship {
   friendshipId String   @id @default(cuid())
@@ -90,21 +91,10 @@ model RealtimePost {
   images         CloudinaryImage[]
   reupPosts      ReupPost[]
   deletedAt      DateTime?
-  realtimeComments RealtimeComment[]
   userPostEmotions UserPost_Emotion[]
   userPostSaves UserPost_Save[]
   postFeeds PostFeed[]
-}
-
-model RealtimeComment {
-  realtimeCommentId String   @id @default(cuid())
-  user              User     @relation(fields: [userId], references: [userId])
-  userId            String
-  post              RealtimePost @relation(fields: [realtimePostId], references: [realtimePostId])
-  realtimePostId    String
-  message           Message?     @relation(fields: [messageId], references: [messageId])
-  messageId         String?
-  createdAt         DateTime     @default(now())
+  messages          Message[]
 }
 
 model CloudinaryImage {
@@ -136,7 +126,8 @@ model Message {
   text       String?
   type       MessageType   @default(TEXT)
   sentAt     DateTime @default(now())
-  realtimeComment RealtimeComment[]
+  postId     String?
+  post       RealtimePost? @relation(fields: [postId], references: [realtimePostId])
 }
 
 model ReupPost {
@@ -175,15 +166,14 @@ model Plan {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   deletedAt      DateTime?
+  isStart        Boolean           @default(false) // Đánh dấu kế hoạch đã bắt đầu
   realtimeImages CloudinaryImage[] @relation("PlanRealtimeImages") // Ảnh realtime trong quá trình
-  planLocations  PlanLocation[]
   planCosts      CostSharing[]
+  tasks          Task[]
 }
 
 model PlanLocation {
   planLocationId String           @id @default(cuid())
-  plan           Plan             @relation(fields: [planId], references: [planId])
-  planId         String
   name           String
   latitude       Float?
   longitude      Float?
@@ -197,6 +187,7 @@ model PlanLocation {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
+  tasks          Task[]
   costSharings   CostSharing[]
 }
 
@@ -236,6 +227,31 @@ model Otp {
   createdAt DateTime @default(now())
 }
 
+model Task {
+  taskId String @id @default(cuid())
+  title String
+  description String?
+  startDate DateTime
+  endDate DateTime
+  status TaskStatus @default(TODO)
+  totalCost Float?
+  planId String
+  plan Plan @relation(fields: [planId], references: [planId])
+  planLocationId String?
+  planLocation PlanLocation? @relation(fields: [planLocationId], references: [planLocationId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([planId, planLocationId])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
+
 model UserPost_Emotion {
   emotion String
   post RealtimePost @relation(fields: [postId], references: [realtimePostId])
@@ -259,8 +275,8 @@ model UserPost_Save {
 }
 
 model SocketConnection {
-  socketId   String
-  userId     String
+  socketId   String @unique
+  userId     String @unique
   lastActive DateTime @default(now())
 
   user User @relation(fields: [userId], references: [userId])
@@ -288,6 +304,7 @@ enum MessageType {
   TEXT
   IMAGE
   REALTIME_IMAGE
+  COMMENT
 }
 
 enum OtpType {

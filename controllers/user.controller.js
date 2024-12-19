@@ -68,6 +68,19 @@ class UserController extends BaseController {
     const user = await userModel.emailVerified(uid, userInfo.emailVerified);
     return this.response(200, user);
   }
+
+  async updateFCMToken() {
+    const uid = await this.authUserId();
+    const fcmToken = this.req.body.fcmToken;
+    const user = await userModel.updateFCMToken(uid, fcmToken);
+    return this.response(200, "Update FCM token success");
+  }
+
+  async updateUser() {
+    const uid = await this.authUserId();
+    const user = await userModel.updateUser(uid, this.req.body);
+    return this.response(200, user);
+  }
 }
 
 module.exports = UserController;

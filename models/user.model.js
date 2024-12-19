@@ -8,11 +8,12 @@ class UserModel {
    * @param {*} id
    * @returns {Promise<User>}
    */
-  async getUserById(id) {
+  async getUserById(userId) {
     const user = await prisma.user.findUnique({
       omit: {
         passwordHash: true,
         avatarId: true,
+        fcmToken: true,
       },
       include: {
         avatar: true,
@@ -21,17 +22,32 @@ class UserModel {
         postFeeds: true,
       },
       where: {
-        userId: id,
+        userId: userId,
       },
     });
 
     return user;
   }
 
-  async getInfoUserById(id) {
+  async updateFCMToken(userId, fcmToken) {
+    return await prisma.user.update({
+      where: { userId },
+      data: { fcmToken },
+    });
+  }
+
+  async getUserFCMToken(userId) {
+    const user = await prisma.user.findUnique({
+      where: { userId },
+      select: { fcmToken: true }
+    });
+    return user?.fcmToken;
+  }
+
+  async getInfoUserById(userId) {
     const user = await prisma.user.findUnique({
       where: {
-        id: id,
+        userId: userId,
       },
     });
     return user;
@@ -102,9 +118,9 @@ class UserModel {
    * @param {*} user
    * @returns {Promise<User>}
    */
-  async updateUser(id, user) {
+  async updateUser(userId, user) {
     const updatedUser = await prisma.user.update({
-      where: { id },
+      where: { userId },
       data: user,
     });
     return updatedUser;
@@ -115,9 +131,10 @@ class UserModel {
    * @param {*} id
    * @returns {Promise<User>}
    */
-  async deleteUser(id) {
-    const deletedUser = await prisma.user.delete({
-      where: { id },
+  async deleteUser(userId) {
+    const deletedUser = await prisma.user.update({
+      where: { userId },
+      data: { deletedAt: new Date() },
     });
     return deletedUser;
   }

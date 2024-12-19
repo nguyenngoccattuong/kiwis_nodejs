@@ -42,6 +42,14 @@ router.put(
   )
 );
 
+router.put(
+  "/plan-location/:planLocationId",
+  authMiddleware,
+  tryCatch((req, res) =>
+    new PlanController(req, res).updateAllPlanLocation(req.params.planLocationId)
+  )
+);
+
 router.delete(
   "/:planId",
   authMiddleware,
@@ -55,6 +63,14 @@ router.put(
   authMiddleware,
   tryCatch((req, res) =>
     new PlanController(req, res).setPlanCompleted(req.params.planId)
+  )
+);
+
+router.put(
+  "/start/:planId",
+  authMiddleware,
+  tryCatch((req, res) =>
+    new PlanController(req, res).setPlanStart(req.params.planId)
   )
 );
 

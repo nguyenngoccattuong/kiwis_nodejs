@@ -86,7 +86,7 @@ class PlanController extends BaseController {
     const userId = await this.authUserId();
     const { groupId } = this.req.params;
 
-    const groupMember = await this.groupMemberModel.exitUserFromGroup(
+    const groupMember = await this.groupMemberModel.existUserFromGroup(
       userId,
       groupId
     );
@@ -242,6 +242,33 @@ class PlanController extends BaseController {
     });
 
     return this.response(200, planLocation);
+  }
+
+  async updateAllPlanLocation(planId) {
+    const userId = await this.authUserId();
+    const data = this.req.body;
+    await this._checkPlanAccess(planId, userId);
+
+    // Xóa các vị trí kế hoạch cũ
+    await this.planLocationModel.deleteAllPlanLocationsByPlanId(planId);
+
+    // Tạo các vị trí kế hoạch mới
+    const planLocations = await this.planLocationModel.createPlanLocations(
+      planId,
+      data.map(location => ({
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: location.address,
+        googlePlaceId: location.googlePlaceId,
+        estimatedCost: location.estimatedCost,
+        estimatedTime: location.estimatedTime,
+      }))
+    );
+
+    const plan = await this.planModel.findPlanById(planId);
+
+    return this.response(200, plan);
   }
 
   async updatePlanLocation(planLocationId) {
@@ -553,6 +580,31 @@ class PlanController extends BaseController {
     return this.response(200, updatedCostSharing);
   }
 
+  async setPlanStart(planId) {
+    const userId = await this.authUserId();
+
+    const plan = await this.planModel.findPlanById(planId);
+    if (plan.createdById !== userId) {
+      throw new Error("Người dùng không phải là người tạo kế hoạch");
+    }
+
+    const updatedPlan = await this.planModel.updatePlan(planId, {
+      isStart: true,
+    });
+
+    const group = await this.groupModel.findGroupById(updatedPlan.groupId);
+
+    const groupMembers = await this.groupMemberModel.findAllMembersByGroupId(
+      group.groupId
+    );
+
+    // const socketIds = groupMembers.map((member) => member.userId);
+
+    // io.to(socketIds).emit("plan_start", updatedPlan);
+
+    return this.response(200, updatedPlan);
+  }
+
   async deletePlanCostSharing() {}
 
   async getAllCostSharingByPlanId() {}
@@ -579,7 +631,7 @@ class PlanController extends BaseController {
 
     if (plan.groupId) {
       const group = await this.groupModel.findGroupById(plan.groupId);
-      const groupMember = await this.groupMemberModel.exitUserFromGroup(
+      const groupMember = await this.groupMemberModel.existUserFromGroup(
         userId,
         group.groupId
       );
@@ -589,6 +641,16 @@ class PlanController extends BaseController {
     }
 
     return plan;
+  }
+
+  async _checkUserIsPlanCreator(planId, userId) {
+    const plan = await this.planModel.findPlanById(planId);
+    if (!plan) {
+      throw Error("Plan not found");
+    }
+    if (plan.createdById !== userId) {
+      throw Error("You can't access this plan");
+    }
   }
 }
 
