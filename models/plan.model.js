@@ -23,7 +23,12 @@ class PlanModel {
       include: {
         createdBy: true,
         group: true,
-        tasks: true,
+        thumbnail: true,
+        tasks: {
+          include: {
+            planLocation: true,
+          },
+        },
       },
     });
   }

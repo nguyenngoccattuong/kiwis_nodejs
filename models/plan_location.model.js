@@ -6,9 +6,6 @@ class PlanLocationModel {
   async createPlanLocation(data) {
     return await prisma.planLocation.create({
       data: data,
-      include: {
-        plan: true,
-      },
     });
   }
 

@@ -6,6 +6,7 @@ const CloudinaryTypes = {
 const CloudinaryFolder = {
   avatar: "avatar",
   post: "post",
+  plan: "plan",
 };
 
 module.exports = { CloudinaryTypes, CloudinaryFolder };

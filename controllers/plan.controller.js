@@ -7,6 +7,7 @@ const CloudinaryFolder = require("../enum/cloudinary.enum");
 const RealTimePostModel = require("../models/realtime_post.model");
 const PlanCostSharingModel = require("../models/plan_cost_sharing.model");
 const BaseController = require("./base.controller");
+const CloudinaryImageModel = require("../models/cloudinary_image.model");
 
 class PlanController extends BaseController {
   constructor(req, res) {
@@ -18,24 +19,32 @@ class PlanController extends BaseController {
     this.cloudinaryService = new CloudinaryService();
     this.realTimePostModel = new RealTimePostModel();
     this.planCostSharingModel = new PlanCostSharingModel();
+    this.cloudinaryImageModel = new CloudinaryImageModel();
   }
 
   async createPlan() {
     const userId = await this.authUserId();
-    const { name, groupId, startDate, endDate, totalCost } = this.req.body;
-
+    const file = this.req.file;
+    const { name, groupId, startDate, endDate, totalCost, description } =
+      this.req.body;
+  
+    // Validate 'name'
     if (!name) {
       throw Error("Name is required");
     }
-
-    if (totalCost && (typeof totalCost !== "number" || isNaN(totalCost))) {
-      throw Error("Total cost must be a valid number");
+  
+    // Convert 'totalCost' to an integer
+    let parsedTotalCost = totalCost ? parseInt(totalCost, 10) : null;
+    if (totalCost && (isNaN(parsedTotalCost) || typeof parsedTotalCost !== "number")) {
+      throw Error("Invalid total cost. It must be a valid number.");
     }
-
-    if (totalCost && totalCost < 0) {
-      throw Error("Total cost must be greater than 0");
+  
+    // Ensure 'totalCost' is positive
+    if (parsedTotalCost && parsedTotalCost < 0) {
+      throw Error("Total cost must be greater than or equal to 0");
     }
-
+  
+    // Date parsing and validation
     const parseDate = (date) => {
       const parsed = Date.parse(date);
       if (isNaN(parsed)) {
@@ -43,10 +52,10 @@ class PlanController extends BaseController {
       }
       return new Date(parsed);
     };
-
+  
     const formattedStartDate = startDate ? parseDate(startDate) : null;
     const formattedEndDate = endDate ? parseDate(endDate) : null;
-
+  
     if (
       formattedStartDate &&
       formattedEndDate &&
@@ -54,23 +63,39 @@ class PlanController extends BaseController {
     ) {
       throw Error("Start date must be before end date");
     }
-
+  
     if (groupId) {
       const group = await this.groupModel.findGroupById(groupId);
       if (!group) {
         throw Error("Group not found");
       }
     }
-
+  
+    let cloudinaryImage;
+    if (file) {
+      const uploaded = await this.cloudinaryService.uploadFile(file);
+      cloudinaryImage = await this.cloudinaryImageModel.createCloudinaryImage({
+        publicId: uploaded.public_id,
+        imageUrl: uploaded.secure_url,
+        type: "thumbnail",
+        format: uploaded.format,
+        width: uploaded.width,
+        height: uploaded.height,
+      });
+    }
+  
+    // Create the plan
     const plan = await this.planModel.createPlan({
       createdById: userId,
-      groupId,
+      groupId: groupId == "" ? null : groupId,
       name,
+      description,
       startDate: formattedStartDate,
       endDate: formattedEndDate,
-      totalCost,
+      totalCost: parsedTotalCost,
+      thumbnailId: cloudinaryImage?.cloudinaryImageId,
     });
-
+  
     return this.response(200, plan);
   }
 
@@ -191,160 +216,6 @@ class PlanController extends BaseController {
 
   // * The user accepts the plan
   async acceptGoToPlan() {}
-  // Plan Location //
-  async addPlanLocation(planId) {
-    const userId = await this.authUserId();
-    const {
-      name,
-      latitude,
-      longitude,
-      address,
-      googlePlaceId,
-      estimatedCost,
-      estimatedTime,
-    } = this.req.body;
-
-    await this._checkPlanAccess(planId, userId);
-
-    if (latitude && latitude instanceof Number) {
-      throw Error("Latitude must be numbers");
-    }
-
-    if (longitude && longitude instanceof Number) {
-      throw Error("Longitude must be numbers");
-    }
-
-    if (estimatedCost && estimatedCost instanceof Number) {
-      throw Error("Estimated cost must be numbers");
-    }
-
-    if (estimatedTime && estimatedTime instanceof Number) {
-      throw Error("Estimated time must be numbers");
-    }
-
-    if (estimatedTime && estimatedTime < 0) {
-      throw Error("Estimated time must be greater than 0");
-    }
-
-    if (estimatedCost && estimatedCost < 0) {
-      throw Error("Estimated cost must be greater than 0");
-    }
-
-    const planLocation = await this.planLocationModel.createPlanLocation({
-      planId,
-      name,
-      latitude,
-      longitude,
-      address,
-      googlePlaceId,
-      estimatedCost,
-      estimatedTime,
-    });
-
-    return this.response(200, planLocation);
-  }
-
-  async updateAllPlanLocation(planId) {
-    const userId = await this.authUserId();
-    const data = this.req.body;
-    await this._checkPlanAccess(planId, userId);
-
-    // Xóa các vị trí kế hoạch cũ
-    await this.planLocationModel.deleteAllPlanLocationsByPlanId(planId);
-
-    // Tạo các vị trí kế hoạch mới
-    const planLocations = await this.planLocationModel.createPlanLocations(
-      planId,
-      data.map(location => ({
-        name: location.name,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        address: location.address,
-        googlePlaceId: location.googlePlaceId,
-        estimatedCost: location.estimatedCost,
-        estimatedTime: location.estimatedTime,
-      }))
-    );
-
-    const plan = await this.planModel.findPlanById(planId);
-
-    return this.response(200, plan);
-  }
-
-  async updatePlanLocation(planLocationId) {
-    const userId = await this.authUserId();
-    const {
-      name,
-      latitude,
-      longitude,
-      address,
-      googlePlaceId,
-      estimatedCost,
-      estimatedTime,
-    } = this.req.body;
-
-    const planLocation = await this.planLocationModel.findPlanLocationById(
-      planLocationId
-    );
-    if (!planLocation) {
-      throw Error("Plan location not found");
-    }
-
-    await this._checkPlanAccess(planLocation.planId, userId);
-
-    if (latitude && latitude instanceof Number) {
-      throw Error("Latitude must be numbers");
-    }
-
-    if (longitude && longitude instanceof Number) {
-      throw Error("Longitude must be numbers");
-    }
-
-    if (estimatedCost && estimatedCost instanceof Number) {
-      throw Error("Estimated cost must be numbers");
-    }
-
-    if (estimatedTime && estimatedTime instanceof Number) {
-      throw Error("Estimated time must be numbers");
-    }
-
-    if (estimatedTime && estimatedTime < 0) {
-      throw Error("Estimated time must be greater than 0");
-    }
-
-    if (estimatedCost && estimatedCost < 0) {
-      throw Error("Estimated cost must be greater than 0");
-    }
-
-    const result = await this.planLocationModel.updatePlanLocation(
-      planLocationId,
-      {
-        name,
-        latitude,
-        longitude,
-        address,
-        googlePlaceId,
-        estimatedCost,
-        estimatedTime,
-      }
-    );
-
-    return this.response(200, result);
-  }
-
-  async deletePlanLocation(planLocationId) {
-    const userId = await this.authUserId();
-
-    const planLocation = await this.planLocationModel.findPlanLocationById(
-      planLocationId
-    );
-
-    await this._checkPlanAccess(planLocation.planId, userId);
-
-    await this.planLocationModel.deletePlanLocation(planLocationId);
-
-    return this.response(200, "Delete plan location successfully");
-  }
 
   // Realtime Image //
   async addRealtimeImageToPlan(planId) {

@@ -6,6 +6,9 @@ class TaskModel {
   async createTask(task) {
     const newTask = await prisma.task.create({
       data: task,
+      include: {
+        planLocation: true,
+      },
     });
     return newTask;
   }
@@ -13,6 +16,9 @@ class TaskModel {
   async getTaskById(taskId) {
     const task = await prisma.task.findUnique({
       where: { taskId },
+      include: {
+        planLocation: true,
+      },
     });
     return task;
   }
@@ -21,7 +27,10 @@ class TaskModel {
     const updatedTask = await prisma.task.update({
       where: { taskId },
       data: task,
-    });
+      include: {
+        planLocation: true,
+      },
+      });
     return updatedTask;
   }
 
@@ -35,6 +44,9 @@ class TaskModel {
   async getTasksByPlanId(planId) {
     const tasks = await prisma.task.findMany({
       where: { planId },
+      include: {
+        planLocation: true,
+      },
     });
     return tasks;
   }
@@ -42,6 +54,9 @@ class TaskModel {
   async getAllTasksHaveLocation() {
     const tasks = await prisma.task.findMany({
       where: { planLocationId: { not: null } },
+      include: {
+        planLocation: true,
+      },
     });
     return tasks;
   }

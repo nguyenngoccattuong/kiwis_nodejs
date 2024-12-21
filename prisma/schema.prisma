@@ -157,10 +157,11 @@ model Plan {
   group          Group?            @relation(fields: [groupId], references: [groupId])
   groupId        String?
   name           String
+  description    String?
   startDate      DateTime?
   endDate        DateTime?
   totalCost      Float?
-  isCompleted    Boolean           @default(false) // Đánh dấu kế hoạch đã hoàn thành
+  isCompleted    Boolean           @default(false)
   thumbnail      CloudinaryImage?  @relation(fields: [thumbnailId], references: [cloudinaryImageId]) // Ảnh thumbnail
   thumbnailId    String?
   createdAt      DateTime          @default(now())

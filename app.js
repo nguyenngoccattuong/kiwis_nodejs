@@ -39,7 +39,7 @@ app.use("/api/upload-realtime", require("./routers/upload_realtime.router"));
 app.use("/api/group", require("./routers/group.router"));
 app.use("/api/notification", require("./routers/notification.router"));
 app.use("/api/plan", require("./routers/plan.router"));
-
+app.use("/api/task", require("./routers/task.router"));
 // Error
 app.use(errorHandle);
 
