@@ -9,6 +9,7 @@ const { tryCatch } = require("../utils/trycath.util");
 router.post(
   "/",
   authMiddleware,
+  upload.single("file"),
   tryCatch((req, res) => new PlanController(req, res).createPlan())
 );
 

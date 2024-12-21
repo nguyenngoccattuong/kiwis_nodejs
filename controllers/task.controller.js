@@ -1,45 +1,123 @@
 const TaskModel = require("../models/task.model");
 const PlanLocationModel = require("../models/plan_location.model");
-class TaskController {
-  constructor() {
+const BaseController = require("./base.controller");
+class TaskController extends BaseController {
+  constructor(req, res, next) {
+    super(req, res, next);
     this.taskModel = new TaskModel();
     this.planLocationModel = new PlanLocationModel();
   }
 
-  async createTask(req, res) {
-    const task = req.body;
-    const newTask = await this.taskModel.createTask(task);
-    res.status(201).json(newTask);
+  /*
+    Request example:
+    {
+      "title": "Task 1",
+      "description": "Description 1",
+      "startDate": "2024-12-19 14:43:17.895",
+      "endDate": "2024-12-19 14:43:17.895",
+      "status": "TODO",
+      "totalCost": 100,
+      "planId": "planId"
+    }
+  */
+  async createTask() {
+    const {
+      title,
+      description,
+      startDate,
+      endDate,
+      status,
+      totalCost,
+      planId,
+    } = this.req.body;
+
+    const { name, latitude, longitude, address, estimatedCost, estimatedTime } = this.req.body.planLocation;
+
+    if (!title) {
+      throw Error("Title is required");
+    }
+
+    if (!description) {
+      throw Error("Description is required");
+    }
+
+    if (!startDate) {
+      throw Error("Start date is required");
+    }
+
+    if (!endDate) {
+      throw Error("End date is required");
+    }
+
+    if (!status) {
+      throw Error("Status is required");
+    }
+
+    if (!planId) {
+      throw Error("Plan id is required");
+    }
+
+    const parseDate = (date) => {
+      const parsed = Date.parse(date);
+      if (isNaN(parsed)) {
+        throw Error(`Invalid date format: ${date}`);
+      }
+      return new Date(parsed);
+    };
+
+    const formattedStartDate = startDate ? parseDate(startDate) : null;
+    const formattedEndDate = endDate ? parseDate(endDate) : null;
+
+    if(formattedStartDate > formattedEndDate) {
+      throw Error("Start date must be less than end date");
+    }
+
+    let planLocation;
+    if(name && latitude && longitude && address && estimatedCost && estimatedTime) {
+      planLocation = await this.planLocationModel.createPlanLocation({name, latitude, longitude, address, estimatedCost, estimatedTime});
+    }
+
+    const newTask = await this.taskModel.createTask({
+      title,
+      description,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      status,
+      totalCost,
+      planId,
+      planLocationId: planLocation.planLocationId,
+    });
+    return this.response(200, newTask);
   }
 
-  async getTaskById(req, res) {
-    const taskId = req.params.taskId;
+  async getTaskById() {
+    const taskId = this.req.params.taskId;
     const task = await this.taskModel.getTaskById(taskId);
-    res.status(200).json(task);
+    return this.response(200, task);
   }
 
-  async updateTask(req, res) {
-    const taskId = req.params.taskId;
-    const task = req.body;
+  async updateTask() {
+    const taskId = this.req.params.taskId;
+    const task = this.req.body;
     const updatedTask = await this.taskModel.updateTask(taskId, task);
-    res.status(200).json(updatedTask);
+    return this.response(200, updatedTask);
   }
 
-  async deleteTask(req, res) {
-    const taskId = req.params.taskId;
+  async deleteTask() {
+    const taskId = this.req.params.taskId;
     const deletedTask = await this.taskModel.deleteTask(taskId);
-    res.status(200).json(deletedTask);
+    return this.response(200, deletedTask);
   }
 
-  async getTasksByPlanId(req, res) {
-    const planId = req.params.planId;
+  async getTasksByPlanId() {
+    const planId = this.req.params.planId;
     const tasks = await this.taskModel.getTasksByPlanId(planId);
-    res.status(200).json(tasks);
+    return this.response(200, tasks);
   }
 
-  async getAllTasksHaveLocation(req, res) {
+  async getAllTasksHaveLocation() {
     const tasks = await this.taskModel.getAllTasksHaveLocation();
-    res.status(200).json(tasks);
+    return this.response(200, tasks);
   }
 
   // Plan Location //
@@ -153,17 +231,22 @@ class TaskController {
       throw Error("Estimated cost must be greater than 0");
     }
 
-    await this.planLocationModel.updatePlanLocation(planLocationId, {
-      name,
-      latitude,
-      longitude,
-      address,
-      googlePlaceId,
-      estimatedCost,
-      estimatedTime,
-    });
+    const planLocationUpdated = await this.planLocationModel.updatePlanLocation(
+      planLocationId,
+      {
+        name,
+        latitude,
+        longitude,
+        address,
+        googlePlaceId,
+        estimatedCost,
+        estimatedTime,
+      }
+    );
 
-    return this.response(200, "Update plan location successfully");
+    const task = await this.taskModel.findTaskById(planLocationId);
+
+    return this.response(200, task);
   }
 
   async deletePlanLocation(planLocationId) {
@@ -180,3 +263,5 @@ class TaskController {
     return this.response(200, "Delete plan location successfully");
   }
 }
+
+module.exports = TaskController;
