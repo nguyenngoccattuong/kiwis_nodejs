@@ -58,9 +58,9 @@ class UserModel {
    * @param {*} phone
    * @returns {Promise<boolean>}
    */
-  async checkUserExistByPhone(phone) {
+  async checkUserExistByPhone(phoneNumber) {
     return await prisma.user.findUnique({
-      where: { phone },
+      where: { phoneNumber },
     });
   }
 
@@ -91,9 +91,9 @@ class UserModel {
    * @param {*} phone
    * @returns {Promise<User>}
    */
-  async getUserByPhone(phone) {
+  async getUserByPhone(phoneNumber) {
     const user = await prisma.user.findUnique({
-      where: { phone },
+      where: { phoneNumber },
     });
     return user;
   }
