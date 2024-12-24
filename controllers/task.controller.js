@@ -85,7 +85,7 @@ class TaskController extends BaseController {
       status,
       totalCost,
       planId,
-      planLocationId: planLocation.planLocationId,
+      planLocationId: planLocation ? planLocation.planLocationId : null,
     });
     return this.response(200, newTask);
   }

@@ -9,7 +9,7 @@ class GroupModel {
         ...data,
         members: {
           create: data.members.map((member) => ({
-            userId: member.userId,
+            userId: member,
             role: member.role || "DEFAULT", // Vai trò mặc định
           })),
         },
@@ -60,7 +60,6 @@ class GroupModel {
                   },
                   include: {
                     plan: true,
-                    planLocation: true,
                   }
                 },
               },

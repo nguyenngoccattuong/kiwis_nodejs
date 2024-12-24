@@ -38,6 +38,7 @@ router.get(
 router.put(
   "/:planId",
   authMiddleware,
+  upload.single("file"),
   tryCatch((req, res) =>
     new PlanController(req, res).updatePlan(req.params.planId)
   )

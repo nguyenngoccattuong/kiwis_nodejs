@@ -7,7 +7,11 @@ class PlanModel {
     return await prisma.plan.create({
       data: data,
       include: {
-        createdBy: true,
+        createdBy: {
+          include: {
+            avatar: true,
+          },
+        },
         group: true,
         thumbnail: true,
         realtimeImages: true,
@@ -27,6 +31,7 @@ class PlanModel {
         tasks: {
           include: {
             planLocation: true,
+            images: true,
           },
         },
       },
@@ -54,7 +59,11 @@ class PlanModel {
       },
       include: {
         createdBy: true,
-        group: true,
+        group: {
+          include: {
+            members: true,
+          },
+        },
         thumbnail: true,
         realtimeImages: true,
         tasks: {

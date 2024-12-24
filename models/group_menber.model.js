@@ -12,6 +12,9 @@ class GroupMemberModel {
   async getGroupMemberByGroupId(groupId) {
     return await prisma.groupMember.findMany({
       where: { groupId: groupId },
+      include: {
+        user: true,
+      },
     });
   }
 

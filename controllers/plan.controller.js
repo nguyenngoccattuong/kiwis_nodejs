@@ -8,7 +8,8 @@ const RealTimePostModel = require("../models/realtime_post.model");
 const PlanCostSharingModel = require("../models/plan_cost_sharing.model");
 const BaseController = require("./base.controller");
 const CloudinaryImageModel = require("../models/cloudinary_image.model");
-
+const NotificationService = require("../services/notification.service");
+const {io} = require("../app");
 class PlanController extends BaseController {
   constructor(req, res) {
     super(req, res);
@@ -140,7 +141,9 @@ class PlanController extends BaseController {
 
   async updatePlan(planId) {
     const userId = await this.authUserId();
-    let { name, startDate, endDate, totalCost } = this.req.body;
+    let { name, startDate, endDate, totalCost, description } = this.req.body;
+    const file = this.req.file;
+
 
     await this._checkPlanAccess(planId, userId);
 
@@ -178,11 +181,31 @@ class PlanController extends BaseController {
       throw Error("Start date must be before end date");
     }
 
+    const getPlan = await this.planModel.findPlanById(planId);
+
+    if (getPlan.thumbnailId) {
+      await this.cloudinaryService.destroyFile(getPlan.thumbnailId);
+    }
+    let cloudinaryImage;
+    if (file) {
+      const uploaded = await this.cloudinaryService.uploadFile(file);
+      cloudinaryImage = await this.cloudinaryImageModel.createCloudinaryImage({
+        publicId: uploaded.public_id,
+        imageUrl: uploaded.secure_url,
+        type: "thumbnail",
+        format: uploaded.format,
+        width: uploaded.width,
+        height: uploaded.height,
+      });
+    }
+
     const plan = await this.planModel.updatePlan(planId, {
       name,
       startDate: formattedStartDate,
       endDate: formattedEndDate,
       totalCost,
+      description,
+      thumbnailId: cloudinaryImage?.cloudinaryImageId,
     });
 
     return this.response(200, plan);
@@ -459,19 +482,37 @@ class PlanController extends BaseController {
       throw new Error("Người dùng không phải là người tạo kế hoạch");
     }
 
+    if(plan.isStart) {
+      return this.response(200, "Plan already started");
+    }
+
     const updatedPlan = await this.planModel.updatePlan(planId, {
       isStart: true,
     });
 
-    const group = await this.groupModel.findGroupById(updatedPlan.groupId);
+    if(updatedPlan.groupId) {
+      const group = await this.groupModel.findGroupById(updatedPlan.groupId);
 
-    const groupMembers = await this.groupMemberModel.findAllMembersByGroupId(
+    const groupMembers = await this.groupMemberModel.getGroupMemberByGroupId(
       group.groupId
     );
+    // groupMembers.remove(updatedPlan.createdById);
+    // Notify all members in the group
+    groupMembers.forEach((member) => {
+      NotificationService.sendToUsers([member.userId], {
+        title: "Kế hoạch đã được bắt đầu",
+        body: `${updatedPlan.createdBy.firstName} ${updatedPlan.createdBy.lastName} đã bắt đầu kế hoạch ${updatedPlan.name}`,
+        data: {
+          planId: updatedPlan.planId,
+        },
+      });
+    });
+    const socketIds = groupMembers.map((member) => member.userId);
 
-    // const socketIds = groupMembers.map((member) => member.userId);
+    io.to(socketIds).emit("plan_start", {socketIds, plan: updatedPlan});
+    }
 
-    // io.to(socketIds).emit("plan_start", updatedPlan);
+    // Socket
 
     return this.response(200, updatedPlan);
   }
