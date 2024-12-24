@@ -2,9 +2,11 @@ const { PrismaClient, GroupMemberRole } = require("@prisma/client");
 const prisma = new PrismaClient();
 const FriendModel = require("../models/friend_ship.model");
 const RealTimePostModel = require("../models/realtime_post.model");
+const PlanModel = require("../models/plan.model");
 
 const friendModel = new FriendModel();
 const realTimePostModel = new RealTimePostModel();
+const planModel = new PlanModel();
 const notificationService = require("../services/notification.service");
 // Middleware for socket connection
 async function socketConnectionHandler(socket, io) {
@@ -216,6 +218,31 @@ async function socketConnectionHandler(socket, io) {
       }
     }
   );
+
+  socket.on("send_task_image", async ({ taskId, imageId }) => {
+    try {
+      const task = await prisma.task.findUnique({
+        where: { taskId: taskId },
+      });
+      if(task){ 
+        const taskImage = await prisma.taskImages.create({
+          data: { taskId, imageId },
+        });
+
+        const taskData = await planModel.findPlanById(task.planId);
+        await taskData.group.members.forEach(async (member) => {
+          const memberSocket = await prisma.socketConnection.findUnique({
+            where: { userId: member.userId },
+          });
+          if (memberSocket) {
+            io.to(memberSocket.socketId).emit("receive_task_image", taskImage);
+          }
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
 
   // Handle socket disconnection
   socket.on("disconnect", async () => {

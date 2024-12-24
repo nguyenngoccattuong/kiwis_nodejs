@@ -35,7 +35,6 @@ class PostFeedModel {
               },
               include: {
                 plan: true,
-                planLocation: true,
               }
             },
             user: {

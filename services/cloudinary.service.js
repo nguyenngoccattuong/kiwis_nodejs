@@ -35,8 +35,8 @@ class CloudinaryModel {
    * @param {*} publicId
    * @returns
    */
-  destroyFile(publicId) {
-    return this.cloudinary.uploader.destroy(publicId);
+  async destroyFile(publicId) {
+    return await this.cloudinary.uploader.destroy(publicId);
   }
 }
 

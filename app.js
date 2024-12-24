@@ -31,7 +31,6 @@ io.on('connection', async (socket) => {
   socketConnectionHandler(socket, io);
 });
 
-
 // Route
 app.use("/api/auth", require("./routers/auth.router"));
 app.use("/api/user", require("./routers/user.router"));
@@ -45,3 +44,5 @@ app.use(errorHandle);
 
 // Post listening
 app.listen(port, () => console.log(`Server is running on port ${port}!`));
+
+module.exports = { app, server, io };
