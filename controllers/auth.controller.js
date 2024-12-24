@@ -79,6 +79,11 @@ class AuthController extends BaseController {
       throw Error("Email is already exists");
     }
 
+    const getPhone = await userModel.checkUserExistByPhone(phoneNumber);
+    if (getPhone) {
+      throw Error("Phone number is already exists");
+    }
+
     const createUser = await userModel.createUser({
       passwordHash: await bcrypt.hashSync(password, 10),
       email,

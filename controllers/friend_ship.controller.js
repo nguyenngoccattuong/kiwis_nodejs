@@ -13,19 +13,21 @@ class FriendShipController extends BaseController {
 
   async addFriend() {
     const userId = await this.authUserId();
-    const { friendId } = this.req.body;
+    const { phoneNumber } = this.req.body;
 
-    if (!friendId) {
-      throw Error("Friend ID is required");
+    if (!phoneNumber) {
+      return this.response(400, "Phone number is required");
     }
+
+    const friend = await this.userModel.getUserByPhone(phoneNumber);
+    if (!friend) {
+      return this.response(400, "User not found with this phone number");
+    }
+
+    const friendId = friend.userId;
 
     if (userId === friendId) {
-      throw Error("You cannot add yourself as a friend");
-    }
-
-    const user = await this.userModel.getUserById(friendId);
-    if (!user) {
-      throw Error("User not found");
+      return this.response(400, "You cannot add yourself as a friend");
     }
 
     const isFriend = await this.friendShipModel.exitsFriendship(
@@ -34,13 +36,11 @@ class FriendShipController extends BaseController {
     );
 
     if (isFriend && isFriend.status === "accepted") {
-      throw Error("You are already friends");
+      return this.response(400, "You are already friends");
     }
 
     if (isFriend && isFriend.status === "pending") {
-      throw Error(
-        "You are waiting for this user to accept your friend request"
-      );
+      return this.response(400, "You are waiting for this user to accept your friend request");
     }
 
     const friendship = await this.friendShipModel.createFriendship({
