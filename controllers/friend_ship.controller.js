@@ -107,7 +107,7 @@ class FriendShipController extends BaseController {
     );
 
     /// Create group
-    await this.groupModel.createGroupMember({
+    await this.groupModel.createGroup({
       members: [
         {
         userId: userId,
