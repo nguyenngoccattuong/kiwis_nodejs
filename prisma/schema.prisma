@@ -183,12 +183,10 @@ model PlanLocation {
   estimatedCost  Float?
   estimatedTime  Int? // Phút
   isCompleted    Boolean @default(false) // Đánh dấu chặng đã hoàn thành
-
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
   tasks        Task[]
-  costSharings CostSharing[]
 }
 
 model CostSharing {
@@ -198,9 +196,7 @@ model CostSharing {
   payer          User                  @relation("CostSharingPayer", fields: [payerId], references: [userId])
   payerId        String
   note           String?
-  planLocation   PlanLocation?         @relation(fields: [planLocationId], references: [planLocationId])
-  planLocationId String?
-  amount         Float
+  amount         Float?
   sharedWith     CostSharingSharedWith @default(GROUP)
   sharedUsers    SharedUser[]
 }

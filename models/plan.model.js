@@ -26,7 +26,28 @@ class PlanModel {
       where: { createdById: userId },
       include: {
         createdBy: true,
-        group: true,
+        group: {
+          include: {
+            members: {
+              include: {
+                user: {
+                  omit: {
+                    avatarId: true,
+                    passwordHash: true,
+                    isActive: true,
+                    deletedAt: true,
+                    emailVerified: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                  include: {
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         thumbnail: true,
         tasks: {
           include: {
