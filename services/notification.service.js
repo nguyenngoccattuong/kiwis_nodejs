@@ -76,7 +76,8 @@ class NotificationService {
       const validTokens = tokens.filter(token => token);
 
       if (validTokens.length === 0) {
-        throw new Error('No valid FCM tokens found');
+        console.log('No valid FCM tokens found');
+        return null;
       }
 
       const message = {
