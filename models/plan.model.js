@@ -55,6 +55,25 @@ class PlanModel {
             images: true,
           },
         },
+        planCosts: {
+          include: {
+            payer: {
+              omit: {
+                avatarId: true,
+                passwordHash: true,
+                isActive: true,
+                deletedAt: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              include: {
+                avatar: true,
+              },
+            },
+            sharedUsers: true,
+          },
+        },
       },
     });
   }

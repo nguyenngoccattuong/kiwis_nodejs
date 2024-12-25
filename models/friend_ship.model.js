@@ -69,10 +69,8 @@ class FriendShipModel {
   async findPendingFriendshipByUserId(userId) {
     const friendships = await prisma.friendship.findMany({
       where: {
-        OR: [
-          { user1Id: userId, status: "pending" },
-          { user2Id: userId, status: "pending" },
-        ],
+        user2Id: userId,
+        status: "pending",
       },
       include: {
         user1: {
@@ -137,6 +135,14 @@ class FriendShipModel {
       where: {
         user1Id: userId,
         user2Id: friendId,
+      },
+    });
+  }
+
+  async findFriendshipById(friendshipId) {
+    return await prisma.friendship.findUnique({
+      where: {
+        friendshipId: friendshipId,
       },
     });
   }

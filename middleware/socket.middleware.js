@@ -3,10 +3,14 @@ const prisma = new PrismaClient();
 const FriendModel = require("../models/friend_ship.model");
 const RealTimePostModel = require("../models/realtime_post.model");
 const PlanModel = require("../models/plan.model");
+const UserModel = require("../models/user.model");
+const FriendShipModel = require("../models/friend_ship.model");
 
 const friendModel = new FriendModel();
+const userModel = new UserModel();
 const realTimePostModel = new RealTimePostModel();
 const planModel = new PlanModel();
+const friendShipModel = new FriendShipModel();
 const notificationService = require("../services/notification.service");
 // Middleware for socket connection
 async function socketConnectionHandler(socket, io) {
@@ -242,6 +246,23 @@ async function socketConnectionHandler(socket, io) {
     } catch (err) {
       console.error(err);
     }
+  });
+
+  socket.on("add_friend", async ({ userId, friendShipId }) => {
+    const friendShip = await friendShipModel.findFriendshipById(friendShipId);
+    const memberSocket = await prisma.socketConnection.findUnique({
+      where: { userId: friendShip.user2Id },
+    });
+
+    const fcmToken = await notificationService.getUserFCMToken(friendShip.user2Id);
+    if(fcmToken){
+      await notificationService.sendNotificationByFCMToken(fcmToken, {
+        title: `Friend invitation`,
+        body: `${friendShip.user1.firstName} ${friendShip.user1.lastName} invited you to be friends`,
+      });
+    }
+
+    io.to(memberSocket.socketId).emit("receive_friend_request", friendShip);
   });
 
   // Handle socket disconnection
