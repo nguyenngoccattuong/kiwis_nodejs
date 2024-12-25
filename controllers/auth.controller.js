@@ -279,11 +279,28 @@ class AuthController extends BaseController {
   async revokeToken() {
     const uid = await this.authUserFirebaseUid();
     const decodedToken = await authService.revokeRefreshToken(uid);
+    const user = await this.userModel.getUserById(uid);
+    if(user){
+      await this.userModel.updateUser(user.userId, {
+        fcmToken: null,
+      });
+    } 
 
     if (!decodedToken) {
       return this.response(403, "Unauthorized: Token is not valid");
     }
     return this.response(200, "Revoke token successfully");
+  }
+
+  async logout() {
+    const userId = await this.authUserId();
+    const user = await this.userModel.getUserById(userId);
+    if(user){
+      await this.userModel.updateUser(user.userId, {
+        fcmToken: null,
+      });
+    } 
+    return this.response(200, "Logout successfully");
   }
 
   async forgotPassword() {

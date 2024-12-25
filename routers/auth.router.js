@@ -24,6 +24,7 @@ router.post(
 );
 router.post(
   "/logout",
+  authMiddleware,
   tryCatch((req, res) => new Auth(req, res).logout())
 );
 router.post(
