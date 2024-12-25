@@ -25,7 +25,7 @@ class NotificationService {
   // Gửi thông báo cho một user cụ thể
   async sendToUser(userId, notification) {
     try {
-      // Lấy token từ database dựa vào userId
+      //Lấy token từ database dựa vào userId
       const userToken = await this.getUserFCMToken(userId);
       
       if (!userToken) {
@@ -57,10 +57,10 @@ class NotificationService {
       };
 
       const response = await this.messaging.send(message);
-      logger.info(`Notification sent to user ${userId}: ${response}`);
+      console.log(`Notification sent to user ${userId}: ${response}`);
       return response;
     } catch (error) {
-      logger.error(`Error sending notification to user ${userId}: ${error.message}`);
+      console.error(`Error sending notification to user ${userId}: ${error.message}`);
       throw error;
     }
   }

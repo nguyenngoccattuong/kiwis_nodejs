@@ -2,7 +2,7 @@ const BaseController = require("./base.controller");
 const FriendShipModel = require("../models/friend_ship.model");
 const GroupModel = require("../models/group.model");
 const UserModel = require("../models/user.model");
-
+const NotificationService = require("../services/notification.service");
 class FriendShipController extends BaseController {
   constructor(req, res) {
     super(req, res);
@@ -14,6 +14,7 @@ class FriendShipController extends BaseController {
   async addFriend() {
     const userId = await this.authUserId();
     const { phoneNumber } = this.req.body;
+    const user = await this.userModel.getUserById(userId);
 
     if (!phoneNumber) {
       return this.response(400, "Phone number is required");
@@ -43,11 +44,22 @@ class FriendShipController extends BaseController {
       return this.response(400, "You are waiting for this user to accept your friend request");
     }
 
+    await NotificationService.sendToUser(friendId, {
+      title: "Friend request",
+      body: "You have a friend request from " + user.firstName + " " + user.lastName,
+    });
+
     const friendship = await this.friendShipModel.createFriendship({
       user1Id: userId,
       user2Id: friendId,
     });
     return this.response(200, friendship);
+  }
+
+  async findPendingFriendshipByUserId() {
+    const userId = await this.authUserId();
+    const friendships = await this.friendShipModel.findPendingFriendshipByUserId(userId);
+    return this.response(200, friendships);
   }
 
   async acceptFriend() {

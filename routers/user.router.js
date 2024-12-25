@@ -56,6 +56,12 @@ router.post(
 );
 
 router.get(
+  "/friend-pending",
+  authMiddleware,
+  tryCatch((req, res) => new FriendShipController(req, res).findPendingFriendshipByUserId())
+);
+
+router.get(
   "/friend",
   authMiddleware,
   tryCatch((req, res) => new FriendShipController(req, res).getFriendList())

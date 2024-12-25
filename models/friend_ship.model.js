@@ -65,7 +65,63 @@ class FriendShipModel {
       }
     });
   }
+
+  async findPendingFriendshipByUserId(userId) {
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [
+          { user1Id: userId, status: "pending" },
+          { user2Id: userId, status: "pending" },
+        ],
+      },
+      include: {
+        user1: {
+          omit: {
+            passwordHash: true,
+            isActive: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+          },
+          include: {
+            avatar: true,
+          },
+        },
+        user2: {
+          omit: {
+            passwordHash: true,
+            isActive: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+          },
+          include: {
+            avatar: true,
+          },
+        },
+      },
+    });
   
+    return friendships.map((friendship) => {
+      if (friendship.user1Id === userId) {
+        return {
+          friendshipId: friendship.friendshipId,
+          status: friendship.status,
+          createdAt: friendship.createdAt,
+          user: friendship.user2,
+        };
+      } else {
+        return {
+          friendshipId: friendship.friendshipId,
+          status: friendship.status,
+          createdAt: friendship.createdAt,
+          user: friendship.user1,
+        };
+      }
+    });
+  }
 
   async exitsFriendship(userId, friendId) {
     return await prisma.friendship.findFirst({
