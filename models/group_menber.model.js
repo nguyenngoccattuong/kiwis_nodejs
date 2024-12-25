@@ -20,7 +20,12 @@ class GroupMemberModel {
 
   async deleteGroupMember(userId, groupId) {
     return await prisma.groupMember.delete({
-      where: { userId: userId, groupId: groupId },
+      where: {
+        groupId_userId: {
+          groupId,
+          userId
+        }
+      }
     });
   }
 

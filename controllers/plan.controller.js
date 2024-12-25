@@ -516,7 +516,13 @@ class PlanController extends BaseController {
     return this.response(200, updatedPlan);
   }
 
-  async deletePlanCostSharing() {}
+  async deletePlanCostSharing() {
+    const userId = await this.authUserId();
+    const { costShareId } = this.req.params;
+    await this._checkPlanAccess(costShareId, userId);
+    await this.planCostSharingModel.deletePlanCostSharing(costShareId);
+    return this.response(200, "Delete plan cost sharing successfully"); 
+  }
 
   async getAllCostSharingByPlanId(planId) {
     const plan = await this.planModel.findPlanById(planId);
