@@ -14,6 +14,29 @@ class PlanCostSharingModel {
       where: { costShareId: costShareId },
     });
   }
+
+  async findCostSharingByPlanId(planId){
+    return await prisma.costSharing.findMany({
+      where: { planId: planId },
+      include: {
+        payer: {
+          omit: {
+            avatarId: true,
+            passwordHash: true,
+            isActive: true,
+            deletedAt: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          include: {
+            avatar: true,
+          },
+        },
+        sharedUsers: true,
+      },
+    });
+  }
 }
 
 module.exports = PlanCostSharingModel;

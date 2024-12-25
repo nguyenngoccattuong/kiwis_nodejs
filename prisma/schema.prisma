@@ -32,7 +32,7 @@ model User {
   reupPosts         ReupPost[]
   groups            Group[]
   sharedUsers       SharedUser[]
-  costSharings      CostSharing[]      @relation("CostSharingPayer")
+  costSharings      CostSharing[]
   plans             Plan[]
   otps              Otp[]
   userPostEmotions  UserPost_Emotion[]
@@ -95,8 +95,8 @@ model RealtimePost {
   userPostSaves    UserPost_Save[]
   postFeeds        PostFeed[]
   messages         Message[]
-  tasks             Task[]         @relation("TaskImages")
-  taskImages        TaskImages[]
+  tasks            Task[]             @relation("TaskImages")
+  taskImages       TaskImages[]
 }
 
 model CloudinaryImage {
@@ -175,7 +175,7 @@ model Plan {
 }
 
 model PlanLocation {
-  planLocationId String  @id @default(cuid())
+  planLocationId String    @id @default(cuid())
   name           String
   latitude       Float?
   longitude      Float?
@@ -183,23 +183,27 @@ model PlanLocation {
   googlePlaceId  String?
   estimatedCost  Float?
   estimatedTime  Int? // Phút
-  isCompleted    Boolean @default(false) // Đánh dấu chặng đã hoàn thành
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  deletedAt    DateTime?
-  tasks        Task[]
+  isCompleted    Boolean   @default(false) // Đánh dấu chặng đã hoàn thành
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  tasks          Task[]
 }
 
 model CostSharing {
-  costShareId    String                @id @default(cuid())
-  plan           Plan                  @relation(fields: [planId], references: [planId])
-  planId         String
-  payer          User                  @relation("CostSharingPayer", fields: [payerId], references: [userId])
-  payerId        String
-  note           String?
-  amount         Float?
-  sharedWith     CostSharingSharedWith @default(GROUP)
-  sharedUsers    SharedUser[]
+  costShareId String                @id @default(cuid())
+  title       String?
+  plan        Plan                  @relation(fields: [planId], references: [planId])
+  planId      String
+  payer       User                  @relation(fields: [payerId], references: [userId])
+  payerId     String
+  note        String
+  amount      Float?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  deletedAt   DateTime?
+  sharedWith  CostSharingSharedWith @default(GROUP)
+  sharedUsers SharedUser[]
 }
 
 model SharedUser {
@@ -225,20 +229,20 @@ model Otp {
 }
 
 model Task {
-  taskId         String            @id @default(cuid())
+  taskId         String         @id @default(cuid())
   title          String
   description    String?
   startDate      DateTime
   endDate        DateTime
-  status         TaskStatus        @default(TODO)
+  status         TaskStatus     @default(TODO)
   totalCost      Float?
   planId         String
-  plan           Plan              @relation(fields: [planId], references: [planId])
+  plan           Plan           @relation(fields: [planId], references: [planId])
   planLocationId String?
-  planLocation   PlanLocation?     @relation(fields: [planLocationId], references: [planLocationId])
-  images         RealtimePost[]    @relation("TaskImages")
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  planLocation   PlanLocation?  @relation(fields: [planLocationId], references: [planLocationId])
+  images         RealtimePost[] @relation("TaskImages")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
   TaskImages     TaskImages[]
 
@@ -252,10 +256,10 @@ enum TaskStatus {
 }
 
 model TaskImages {
-  taskId            String
-  postId            String
-  task              Task            @relation(fields: [taskId], references: [taskId])
-  post              RealtimePost    @relation(fields: [postId], references: [realtimePostId])
+  taskId String
+  postId String
+  task   Task         @relation(fields: [taskId], references: [taskId])
+  post   RealtimePost @relation(fields: [postId], references: [realtimePostId])
 
   @@id([taskId, postId]) // Composite key để đảm bảo uniqueness
 }

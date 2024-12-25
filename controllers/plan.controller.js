@@ -310,37 +310,38 @@ class PlanController extends BaseController {
       amount,
       payerId,
       note,
+      title,
       sharedWith,
       individualShares,
     } = this.req.body;
-
+  
     const plan = await this._checkPlanAccess(planId, userId);
-
+  
     if (amount && amount < 0) {
       throw Error("Amount must be greater than 0");
     }
-
+  
     if (amount instanceof Number) {
       throw Error("Amount must be a number");
     }
-
+  
     const payer = payerId || userId;
-
+  
     // 3. Xử lý theo loại chia tiền
-    let finalAmount = amount; // Sẽ sử dụng để lưu trong CostSharing
-
-    if (sharedWith === "group") {
-      // Với `sharedWith = group`, `amount` là bắt buộc
-      if (!amount || typeof amount !== "number" || amount <= 0) {
-        throw new Error("Amount must be a positive number for group sharing");
+    let finalAmount = amount;
+  
+    if (sharedWith === "GROUP") {
+      if (sharedWith === "GROUP") {
+        if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+          throw new Error("Amount must be a positive number for group sharing");
+        }
+        finalAmount = Number(amount); 
       }
-    } else if (sharedWith === "individuals") {
-      // Với `sharedWith = individuals`, `individualShares` là bắt buộc
+    } else if (sharedWith === "INDIVIDUALS") {
       if (!Array.isArray(individualShares) || individualShares.length === 0) {
         throw new Error("Individual shares must be a non-empty array");
       }
-
-      // Tính tổng tiền từ `individualShares`
+  
       finalAmount = individualShares.reduce((sum, share) => {
         if (
           !share.userId ||
@@ -358,21 +359,29 @@ class PlanController extends BaseController {
         "Invalid sharedWith value. Must be 'group' or 'individuals'"
       );
     }
-
+  
     const data = {
+      title,
       amount: finalAmount,
-      payerId: payer,
-      planId,
       note,
+      payerId,
+      planId,
       sharedWith,
-      sharedUsers: sharedWith === "individuals" ? individualShares : [],
+      sharedUsers: {
+        create: individualShares.map((share) => ({
+          user: { connect: { userId: share.userId } },
+          amount: share.amount,
+        })),
+      },
     };
-
+  
+    // Create the cost sharing record in the database
     const planCostSharing =
       await this.planCostSharingModel.createPlanCostSharing(data);
-
+  
     return this.response(200, planCostSharing);
   }
+  
 
   async updatePlanCostSharing() {
     const userId = await this.authUserId();
@@ -383,6 +392,7 @@ class PlanController extends BaseController {
       payerId,
       planId,
       note,
+      title,
       sharedWith,
       individualShares,
     } = this.req.body;
@@ -508,9 +518,16 @@ class PlanController extends BaseController {
 
   async deletePlanCostSharing() {}
 
-  async getAllCostSharingByPlanId() {}
+  async getAllCostSharingByPlanId(planId) {
+    const plan = await this.planModel.findPlanById(planId);
+    if (!plan) {
+      throw Error("Plan not found");
+    }
+    const costSharing = await this.planCostSharingModel.findCostSharingByPlanId(planId);
+    return this.response(200, costSharing);
+  }
 
-  async getAllNotPaid() {}
+  async getAllNotPaid(planId) {}
 
   async getAllCostSharingByPlanLocationId() {}
 
