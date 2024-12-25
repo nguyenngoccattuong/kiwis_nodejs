@@ -13,6 +13,7 @@ model User {
   firstName         String
   lastName          String
   email             String             @unique
+  phoneNumber       String             @unique
   passwordHash      String
   avatar            CloudinaryImage?   @relation(fields: [avatarId], references: [cloudinaryImageId])
   avatarId          String?
