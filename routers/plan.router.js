@@ -109,6 +109,14 @@ router.post(
   )
 );
 
+router.post(
+  "/cost-sharing/:planId",
+  authMiddleware,
+  tryCatch((req, res) =>
+    new PlanController(req, res).createPlanCostSharing(req.params.planId)
+  )
+);
+
 router.delete(
   "/post/:realtimePostId",
   authMiddleware,

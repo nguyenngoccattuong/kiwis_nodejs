@@ -304,27 +304,17 @@ class PlanController extends BaseController {
 
   // Cost sharing
   // Note*: Nhớ add sharedUser vào: Người trả tiền cho người chi
-  async createPlanCostSharing() {
+  async createPlanCostSharing(planId) {
     const userId = await this.authUserId();
     const {
-      planLocationId,
       amount,
       payerId,
-      planId,
       note,
       sharedWith,
       individualShares,
     } = this.req.body;
 
     const plan = await this._checkPlanAccess(planId, userId);
-
-    if (planLocationId) {
-      const exitPlanLocation =
-        await this.planLocationModel.findPlanLocationById(planLocationId);
-      if (!exitPlanLocation) {
-        throw Error("Plan location not found");
-      }
-    }
 
     if (amount && amount < 0) {
       throw Error("Amount must be greater than 0");
@@ -370,7 +360,6 @@ class PlanController extends BaseController {
     }
 
     const data = {
-      planLocationId,
       amount: finalAmount,
       payerId: payer,
       planId,
