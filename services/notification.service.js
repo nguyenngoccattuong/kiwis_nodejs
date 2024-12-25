@@ -28,37 +28,37 @@ class NotificationService {
       //Lấy token từ database dựa vào userId
       const userToken = await this.getUserFCMToken(userId);
       
-      if (!userToken) {
-        throw new Error('User FCM token not found');
-      }
-
-      const message = {
-        token: userToken,
-        notification: {
-          title: notification.title,
-          body: notification.body,
-        },
-        data: notification.data || {},
-        android: {
-          priority: 'high',
+      if (userToken) {
+        const message = {
+          token: userToken,
           notification: {
-            sound: 'default',
-            channelId: 'default'
-          }
-        },
-        apns: {
-          payload: {
-            aps: {
+            title: notification.title,
+            body: notification.body,
+          },
+          data: notification.data || {},
+          android: {
+            priority: 'high',
+            notification: {
               sound: 'default',
-              badge: 1
+              channelId: 'default'
+            }
+          },
+          apns: {
+            payload: {
+              aps: {
+                sound: 'default',
+                badge: 1
+              }
             }
           }
-        }
-      };
+        };
+  
+        const response = await this.messaging.send(message);
+        console.log(`Notification sent to user ${userId}: ${response}`);
+        return response;
+      }
 
-      const response = await this.messaging.send(message);
-      console.log(`Notification sent to user ${userId}: ${response}`);
-      return response;
+      return null;
     } catch (error) {
       console.error(`Error sending notification to user ${userId}: ${error.message}`);
       throw error;
@@ -104,10 +104,11 @@ class NotificationService {
       };
 
       const response = await this.messaging.sendMulticast(message);
-      logger.info(`Batch notification sent: ${response.successCount} successful, ${response.failureCount} failed`);
+      // logger.info(`Batch notification sent: ${response.successCount} successful, ${response.failureCount} failed`);
       return response;
     } catch (error) {
-      logger.error(`Error sending batch notification: ${error.message}`);
+      // logger.error(`Error sending batch notification: ${error.message}`);
+      console.log(`Error sending batch notification: ${error.message}`);
       throw error;
     }
   }
