@@ -126,6 +126,14 @@ router.get(
 );
 
 router.delete(
+  "/cost-sharing/:costShareId",
+  authMiddleware,
+  tryCatch((req, res) =>
+    new PlanController(req, res).deletePlanCostSharing(req.params.costShareId)
+  )
+);  
+
+router.delete(
   "/post/:realtimePostId",
   authMiddleware,
   tryCatch((req, res) =>
