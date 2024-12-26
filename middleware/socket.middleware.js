@@ -202,15 +202,15 @@ async function socketConnectionHandler(socket, io) {
         });
 
         groupMembers.forEach(async (member) => {
-          const fcmToken = await notificationService.getUserFCMToken(
-            member.userId
-          );
-          if (fcmToken && member.userId !== senderId) {
-            await notificationService.sendNotificationByFCMToken(fcmToken, {
-              title: `${sender.firstName} ${sender.lastName}`,
-              body: messageText,
-            });
-          }
+          // const fcmToken = await notificationService.getUserFCMToken(
+          //   member.userId
+          // );
+          // if (fcmToken && member.userId !== senderId) {
+          //   await notificationService.sendNotificationByFCMToken(fcmToken, {
+          //     title: `${sender.firstName} ${sender.lastName}`,
+          //     body: messageText,
+          //   });
+          // }
 
           const memberSocket = await prisma.socketConnection.findUnique({
             where: { userId: member.userId },
@@ -276,7 +276,57 @@ async function socketConnectionHandler(socket, io) {
       title: `Friend invitation`,
       body: `${user.firstName} ${user.lastName} accepted your friend request`,
     });
-    io.to(socketConnection.socketId).emit("accept_friend_request", true);
+    if (socketConnection) {
+      io.to(socketConnection.socketId).emit("accept_friend_request", true);
+    }
+  });
+
+  socket.on("add_plan", async ({ userId, planId, groupId }) => {
+    const user = await userModel.getUserById(userId);
+    const plan = await planModel.findPlanById(planId);
+
+    const groupMembers = await prisma.groupMember.findMany({
+      where: { groupId: groupId },
+      include: { user: true },
+    });
+    groupMembers.forEach(async (member) => {
+      const fcmToken = await notificationService.getUserFCMToken(
+        member.userId
+      );
+      if (fcmToken && member.userId !== userId) {
+        await notificationService.sendNotificationByFCMToken(fcmToken, {
+          title: `${user.firstName} ${user.lastName} add new plan`,
+          body: `${plan.name}: ${plan.description}`,
+        });
+      }
+
+      const memberSocket = await prisma.socketConnection.findUnique({
+        where: { userId: member.userId },
+      });
+
+      if (memberSocket) {
+        io.to(memberSocket.socketId).emit("add_plan", true);
+      }
+    });
+  });
+
+  socket.on("add_refresh_plan", async ({ userId, planId, groupId }) => {
+    const user = await userModel.getUserById(userId);
+    const plan = await planModel.findPlanById(planId);
+
+    const groupMembers = await prisma.groupMember.findMany({
+      where: { groupId: groupId },
+      include: { user: true },
+    });
+    groupMembers.forEach(async (member) => {
+      const memberSocket = await prisma.socketConnection.findUnique({
+        where: { userId: member.userId },
+      });
+
+      if (memberSocket) {
+        io.to(memberSocket.socketId).emit("add_refresh_plan", true);
+      }
+    });
   });
 
   // Handle socket disconnection
