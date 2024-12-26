@@ -46,7 +46,7 @@ class FriendShipModel {
         },
       },
     });
-  
+
     return friendships.map((friendship) => {
       if (friendship.user1Id === userId) {
         return {
@@ -101,7 +101,7 @@ class FriendShipModel {
         },
       },
     });
-  
+
     return friendships.map((friendship) => {
       if (friendship.user1Id === userId) {
         return {
@@ -139,12 +139,56 @@ class FriendShipModel {
     });
   }
 
-  async findFriendshipById(friendshipId) {
-    return await prisma.friendship.findUnique({
+  async findFriendshipById(friendshipId, userId) {
+    const friendship = await prisma.friendship.findUnique({
       where: {
         friendshipId: friendshipId,
       },
+      include: {
+        user1: {
+          omit: {
+            passwordHash: true,
+            isActive: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+          },
+          include: {
+            avatar: true,
+          },
+        },
+        user2: {
+          omit: {
+            passwordHash: true,
+            isActive: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true,
+          },
+          include: {
+            avatar: true,
+          },
+        },
+      },
     });
+
+    if (friendship.user1.userId === userId) {
+      return {
+        friendshipId: friendship.friendshipId,
+        status: friendship.status,
+        createdAt: friendship.createdAt,
+        user: friendship.user1,
+      };
+    } else {
+      return {
+        friendshipId: friendship.friendshipId,
+        status: friendship.status,
+        createdAt: friendship.createdAt,
+        user: friendship.user2,
+      };
+    }
   }
 
   async updateFriendship(friendshipId, data) {
