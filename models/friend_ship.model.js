@@ -180,6 +180,7 @@ class FriendShipModel {
         status: friendship.status,
         createdAt: friendship.createdAt,
         user: friendship.user1,
+        receiver: friendship.user2,
       };
     } else {
       return {
@@ -187,6 +188,7 @@ class FriendShipModel {
         status: friendship.status,
         createdAt: friendship.createdAt,
         user: friendship.user2,
+        receiver: friendship.user1,
       };
     }
   }

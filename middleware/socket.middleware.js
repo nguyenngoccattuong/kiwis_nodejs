@@ -256,10 +256,10 @@ async function socketConnectionHandler(socket, io) {
     const user = await userModel.getUserById(userId);
     const friendShip = await friendShipModel.findFriendshipById(friendShipId, userId);
     const memberSocket = await prisma.socketConnection.findUnique({
-      where: { userId: friendShip.user.userId },
+      where: { userId: friendShip.receiver.userId },
     });
 
-    await notificationService.sendToUser(friendShip.user.userId, {
+    await notificationService.sendToUser(friendShip.receiver.userId, {
       title: `Friend invitation`,
       body: `${user.firstName} ${user.lastName} invited you to be friends`,
     });
