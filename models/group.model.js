@@ -3,8 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 class GroupModel {
   async createGroupMember(data) {
-    console.log(data);
-    return await prisma.groupMember.create({
+    return await prisma.group.create({
       data: {
         ...data,
         members: {
@@ -18,7 +17,6 @@ class GroupModel {
   }
 
   async createGroup(data) {
-    console.log(data);
     return await prisma.group.create({
       data: {
         ...data,

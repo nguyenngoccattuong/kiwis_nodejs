@@ -51,19 +51,21 @@ async function socketConnectionHandler(socket, io) {
       const post = await prisma.realtimePost.findUnique({
         where: { realtimePostId: postId },
       });
-      if(post){
+      if (post) {
         const postData = await realTimePostModel.findById(postId);
-        const friends = await friendModel.findFriendshipByUserId(postData.userId);
+        const friends = await friendModel.findFriendshipByUserId(
+          postData.userId
+        );
 
         const friendSocket = await prisma.socketConnection.findMany({
           where: {
             userId: {
-              in: friends.map(friend => friend.user.userId),
+              in: friends.map((friend) => friend.user.userId),
             },
           },
         });
 
-        friendSocket.forEach(socket => {
+        friendSocket.forEach((socket) => {
           io.to(socket.socketId).emit("receive_post", postData);
         });
       }
@@ -114,7 +116,7 @@ async function socketConnectionHandler(socket, io) {
               type: "COMMENT",
             },
             include: {
-              post:{
+              post: {
                 include: {
                   images: {
                     omit: {
@@ -124,7 +126,7 @@ async function socketConnectionHandler(socket, io) {
                     include: {
                       plan: true,
                       planLocation: true,
-                    }
+                    },
                   },
                 },
               },
@@ -200,8 +202,10 @@ async function socketConnectionHandler(socket, io) {
         });
 
         groupMembers.forEach(async (member) => {
-          const fcmToken = await notificationService.getUserFCMToken(member.userId);
-          if(fcmToken && member.userId !== senderId){
+          const fcmToken = await notificationService.getUserFCMToken(
+            member.userId
+          );
+          if (fcmToken && member.userId !== senderId) {
             await notificationService.sendNotificationByFCMToken(fcmToken, {
               title: `${sender.firstName} ${sender.lastName}`,
               body: messageText,
@@ -228,7 +232,7 @@ async function socketConnectionHandler(socket, io) {
       const task = await prisma.task.findUnique({
         where: { taskId: taskId },
       });
-      if(task){ 
+      if (task) {
         const taskImage = await prisma.taskImages.create({
           data: { taskId, imageId },
         });
@@ -249,20 +253,30 @@ async function socketConnectionHandler(socket, io) {
   });
 
   socket.on("add_friend", async ({ userId, friendShipId }) => {
-    const friendShip = await friendShipModel.findFriendshipById(friendShipId);
+    const user = await userModel.getUserById(userId);
+    const friendShip = await friendShipModel.findFriendshipById(friendShipId, userId);
     const memberSocket = await prisma.socketConnection.findUnique({
-      where: { userId: friendShip.user2Id },
+      where: { userId: friendShip.user.userId },
     });
 
-    const fcmToken = await notificationService.getUserFCMToken(friendShip.user2Id);
-    if(fcmToken){
-      await notificationService.sendNotificationByFCMToken(fcmToken, {
-        title: `Friend invitation`,
-        body: `${friendShip.user1.firstName} ${friendShip.user1.lastName} invited you to be friends`,
-      });
-    }
+    await notificationService.sendToUser(friendShip.user.userId, {
+      title: `Friend invitation`,
+      body: `${user.firstName} ${user.lastName} invited you to be friends`,
+    });
 
     io.to(memberSocket.socketId).emit("receive_friend_request", friendShip);
+  });
+
+  socket.on("accept_friend", async ({ userId, receiverId }) => {
+    const user = await userModel.getUserById(userId);
+    const socketConnection = await prisma.socketConnection.findUnique({
+      where: { userId: receiverId },
+    });
+    await notificationService.sendToUser(receiverId, {
+      title: `Friend invitation`,
+      body: `${user.firstName} ${user.lastName} accepted your friend request`,
+    });
+    io.to(socketConnection.socketId).emit("accept_friend_request", true);
   });
 
   // Handle socket disconnection
