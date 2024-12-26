@@ -83,11 +83,54 @@ class PlanModel {
       where: { groupId: groupId },
       include: {
         createdBy: true,
-        group: true,
+        group: {
+          include: {
+            members: {
+              include: {
+                user: {
+                  omit: {
+                    avatarId: true,
+                    passwordHash: true,
+                    isActive: true,
+                    deletedAt: true,
+                    emailVerified: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                  include: {
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         thumbnail: true,
-        realtimeImages: true,
-        planCosts: true,
-        tasks: true,
+        tasks: {
+          include: {
+            planLocation: true,
+            images: true,
+          },
+        },
+        planCosts: {
+          include: {
+            payer: {
+              omit: {
+                avatarId: true,
+                passwordHash: true,
+                isActive: true,
+                deletedAt: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              include: {
+                avatar: true,
+              },
+            },
+            sharedUsers: true,
+          },
+        },
       },
     });
   }
@@ -101,17 +144,52 @@ class PlanModel {
         createdBy: true,
         group: {
           include: {
-            members: true,
+            members: {
+              include: {
+                user: {
+                  omit: {
+                    avatarId: true,
+                    passwordHash: true,
+                    isActive: true,
+                    deletedAt: true,
+                    emailVerified: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                  include: {
+                    avatar: true,
+                  },
+                },
+              },
+            },
           },
         },
         thumbnail: true,
-        realtimeImages: true,
         tasks: {
-          orderBy: {
-            createdAt: "asc",
+          include: {
+            planLocation: true,
+            images: true,
           },
         },
-        planCosts: true,
+        planCosts: {
+          include: {
+            payer: {
+              omit: {
+                avatarId: true,
+                passwordHash: true,
+                isActive: true,
+                deletedAt: true,
+                emailVerified: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+              include: {
+                avatar: true,
+              },
+            },
+            sharedUsers: true,
+          },
+        },
       },
     });
   }
