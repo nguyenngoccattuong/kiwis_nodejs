@@ -52,6 +52,19 @@ class PlanCostSharingModel {
       },
     });
   }
+
+  async deletePlanCostSharing(costShareId) {
+    return await prisma.costSharing.delete({
+      where: { costShareId: costShareId },
+    });
+  } 
+
+  async updatePlanCostSharing(costShareId, data) {
+    return await prisma.costSharing.update({
+      where: { costShareId: costShareId },
+      data: data,
+    });
+  } 
 }
 
 module.exports = PlanCostSharingModel;
