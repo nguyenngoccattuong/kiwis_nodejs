@@ -125,7 +125,6 @@ async function socketConnectionHandler(socket, io) {
                     },
                     include: {
                       plan: true,
-                      planLocation: true,
                     },
                   },
                 },
@@ -263,8 +262,9 @@ async function socketConnectionHandler(socket, io) {
       title: `Friend invitation`,
       body: `${user.firstName} ${user.lastName} invited you to be friends`,
     });
-
-    io.to(memberSocket.socketId).emit("receive_friend_request", friendShip);
+    if (memberSocket) {
+      io.to(memberSocket.socketId).emit("receive_friend_request", friendShip);
+    }
   });
 
   socket.on("accept_friend", async ({ userId, receiverId }) => {
@@ -325,6 +325,22 @@ async function socketConnectionHandler(socket, io) {
 
       if (memberSocket) {
         io.to(memberSocket.socketId).emit("add_refresh_plan", true);
+      }
+    });
+  });
+
+  socket.on("add_group", async ({ groupId }) => {
+    const groupMembers = await prisma.groupMember.findMany({
+      where: { groupId: groupId },
+      include: { user: true },
+    });
+
+    groupMembers.forEach(async (member) => {
+      const memberSocket = await prisma.socketConnection.findUnique({
+        where: { userId: member.userId },
+      });
+      if (memberSocket) {
+        io.to(memberSocket.socketId).emit("add_group", true);
       }
     });
   });

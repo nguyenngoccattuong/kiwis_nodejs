@@ -9,7 +9,7 @@ const PlanCostSharingModel = require("../models/plan_cost_sharing.model");
 const BaseController = require("./base.controller");
 const CloudinaryImageModel = require("../models/cloudinary_image.model");
 const NotificationService = require("../services/notification.service");
-const {io} = require("../app");
+const { io } = require("../app");
 class PlanController extends BaseController {
   constructor(req, res) {
     super(req, res);
@@ -28,23 +28,26 @@ class PlanController extends BaseController {
     const file = this.req.file;
     const { name, groupId, startDate, endDate, totalCost, description } =
       this.req.body;
-  
+
     // Validate 'name'
     if (!name) {
       throw Error("Name is required");
     }
-  
+
     // Convert 'totalCost' to an integer
     let parsedTotalCost = totalCost ? parseInt(totalCost, 10) : null;
-    if (totalCost && (isNaN(parsedTotalCost) || typeof parsedTotalCost !== "number")) {
+    if (
+      totalCost &&
+      (isNaN(parsedTotalCost) || typeof parsedTotalCost !== "number")
+    ) {
       throw Error("Invalid total cost. It must be a valid number.");
     }
-  
+
     // Ensure 'totalCost' is positive
     if (parsedTotalCost && parsedTotalCost < 0) {
       throw Error("Total cost must be greater than or equal to 0");
     }
-  
+
     // Date parsing and validation
     const parseDate = (date) => {
       const parsed = Date.parse(date);
@@ -53,10 +56,10 @@ class PlanController extends BaseController {
       }
       return new Date(parsed);
     };
-  
+
     const formattedStartDate = startDate ? parseDate(startDate) : null;
     const formattedEndDate = endDate ? parseDate(endDate) : null;
-  
+
     if (
       formattedStartDate &&
       formattedEndDate &&
@@ -64,14 +67,14 @@ class PlanController extends BaseController {
     ) {
       throw Error("Start date must be before end date");
     }
-  
+
     if (groupId) {
       const group = await this.groupModel.findGroupById(groupId);
       if (!group) {
         throw Error("Group not found");
       }
     }
-  
+
     let cloudinaryImage;
     if (file) {
       const uploaded = await this.cloudinaryService.uploadFile(file);
@@ -84,7 +87,7 @@ class PlanController extends BaseController {
         height: uploaded.height,
       });
     }
-  
+
     // Create the plan
     const plan = await this.planModel.createPlan({
       createdById: userId,
@@ -96,7 +99,7 @@ class PlanController extends BaseController {
       totalCost: parsedTotalCost,
       thumbnailId: cloudinaryImage?.cloudinaryImageId,
     });
-  
+
     return this.response(200, plan);
   }
 
@@ -143,7 +146,6 @@ class PlanController extends BaseController {
     const userId = await this.authUserId();
     let { name, startDate, endDate, totalCost, description } = this.req.body;
     const file = this.req.file;
-
 
     await this._checkPlanAccess(planId, userId);
 
@@ -306,42 +308,36 @@ class PlanController extends BaseController {
   // Note*: Nhớ add sharedUser vào: Người trả tiền cho người chi
   async createPlanCostSharing(planId) {
     const userId = await this.authUserId();
-    const {
-      amount,
-      payerId,
-      note,
-      title,
-      sharedWith,
-      individualShares,
-    } = this.req.body;
-  
+    const { amount, payerId, note, title, sharedWith, individualShares } =
+      this.req.body;
+
     const plan = await this._checkPlanAccess(planId, userId);
-  
+
     if (amount && amount < 0) {
       throw Error("Amount must be greater than 0");
     }
-  
+
     if (amount instanceof Number) {
       throw Error("Amount must be a number");
     }
-  
+
     const payer = payerId || userId;
-  
+
     // 3. Xử lý theo loại chia tiền
     let finalAmount = amount;
-  
+
     if (sharedWith === "GROUP") {
       if (sharedWith === "GROUP") {
         if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
           throw new Error("Amount must be a positive number for group sharing");
         }
-        finalAmount = Number(amount); 
+        finalAmount = Number(amount);
       }
     } else if (sharedWith === "INDIVIDUALS") {
       if (!Array.isArray(individualShares) || individualShares.length === 0) {
         throw new Error("Individual shares must be a non-empty array");
       }
-  
+
       finalAmount = individualShares.reduce((sum, share) => {
         if (
           !share.userId ||
@@ -359,7 +355,7 @@ class PlanController extends BaseController {
         "Invalid sharedWith value. Must be 'group' or 'individuals'"
       );
     }
-  
+
     const data = {
       title,
       amount: finalAmount,
@@ -374,14 +370,13 @@ class PlanController extends BaseController {
         })),
       },
     };
-  
+
     // Create the cost sharing record in the database
     const planCostSharing =
       await this.planCostSharingModel.createPlanCostSharing(data);
-  
+
     return this.response(200, planCostSharing);
   }
-  
 
   async updatePlanCostSharing() {
     const userId = await this.authUserId();
@@ -481,7 +476,7 @@ class PlanController extends BaseController {
       throw new Error("Người dùng không phải là người tạo kế hoạch");
     }
 
-    if(plan.isStart) {
+    if (plan.isStart) {
       return this.response(200, "Plan already started");
     }
 
@@ -489,31 +484,31 @@ class PlanController extends BaseController {
       isStart: true,
     });
 
-    if(updatedPlan.groupId) {
+    if (updatedPlan.groupId) {
       const group = await this.groupModel.findGroupById(updatedPlan.groupId);
 
-    const groupMembers = await this.groupMemberModel.getGroupMemberByGroupId(
-      group.groupId
-    );
-    // groupMembers.remove(updatedPlan.createdById);
-    // Notify all members in the group
-    groupMembers.forEach((member) => {
-      NotificationService.sendToUsers([member.userId], {
-        title: "Kế hoạch đã được bắt đầu",
-        body: `${updatedPlan.createdBy.firstName} ${updatedPlan.createdBy.lastName} đã bắt đầu kế hoạch ${updatedPlan.name}`,
-        data: {
-          planId: updatedPlan.planId,
-        },
-      });
-    });
-    const socketIds = groupMembers.map((member) => member.userId);
+      const groupMembers = await this.groupMemberModel.getGroupMemberByGroupId(
+        group.groupId
+      );
+      // groupMembers.remove(updatedPlan.createdById);
+      // Notify all members in the group
+      // groupMembers.forEach((member) => {
+      //   NotificationService.sendToUsers([member.userId], {
+      //     title: "Kế hoạch đã được bắt đầu",
+      //     body: `${updatedPlan.createdBy.firstName} ${updatedPlan.createdBy.lastName} đã bắt đầu kế hoạch ${updatedPlan.name}`,
+      //     data: {
+      //       planId: updatedPlan.planId,
+      //     },
+      //   });
+      // });
+      // const socketIds = groupMembers.map((member) => member.userId);
 
-    io.to(socketIds).emit("plan_start", {socketIds, plan: updatedPlan});
+      // io.to(socketIds).emit("plan_start", { socketIds, plan: updatedPlan });
+
+      // Socket
+
+      return this.response(200, updatedPlan);
     }
-
-    // Socket
-
-    return this.response(200, updatedPlan);
   }
 
   async deletePlanCostSharing() {
@@ -523,13 +518,15 @@ class PlanController extends BaseController {
     await this.planCostSharingModel.deletePlanCostSharing(costShareId);
     return this.response(200, "Delete plan cost sharing successfully"); 
   }
-
+  
   async getAllCostSharingByPlanId(planId) {
     const plan = await this.planModel.findPlanById(planId);
     if (!plan) {
       throw Error("Plan not found");
     }
-    const costSharing = await this.planCostSharingModel.findCostSharingByPlanId(planId);
+    const costSharing = await this.planCostSharingModel.findCostSharingByPlanId(
+      planId
+    );
     return this.response(200, costSharing);
   }
 

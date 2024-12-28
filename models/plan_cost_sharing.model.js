@@ -6,6 +6,22 @@ class PlanCostSharingModel {
   async createPlanCostSharing(data){
     return await prisma.costSharing.create({
       data: data,
+      include: {
+        payer: {
+          omit: {
+            avatarId: true,
+            passwordHash: true,
+            isActive: true,
+            deletedAt: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          include: {
+            avatar: true,
+          },
+        },
+      },
     });
   }
 
@@ -33,7 +49,6 @@ class PlanCostSharingModel {
             avatar: true,
           },
         },
-        sharedUsers: true,
       },
     });
   }
