@@ -22,7 +22,7 @@ class GroupModel {
         ...data,
         members: {
           create: data.members.map((member) => ({
-            userId: member,
+            userId: member.userId,
             role: member.role || "DEFAULT", // Vai trò mặc định
           })),
         },

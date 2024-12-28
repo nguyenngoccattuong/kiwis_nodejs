@@ -25,33 +25,29 @@ class GroupController extends BaseController {
     const uid = await this.authUserId();
     const { name, members } = this.req.body;
 
-    const data = {
-      name,
-      createdById: uid,
-      members,
-      type: members.length > 2 ? "GROUP" : "DEFAULT",
-    };
-
-    const group = await this.groupModel.createGroup(data);
-
     let memberData = [];
     if (members) {
       memberData = members.map((member) => {
-        if (member.userId === uid) {
+        if (member === uid) {
           return {
-            groupId: group.groupId,
             userId: member,
             role: "ADMIN",
           };
         }
         return {
-          groupId: group.groupId,
           userId: member,
         };
       });
     }
 
-    await this.groupMemberModel.createGroupMembers(memberData);
+    const data = {
+      name,
+      createdById: uid,
+      members: memberData,
+      type: members.length > 2 ? "GROUP" : "DEFAULT",
+    };
+
+    const group = await this.groupModel.createGroup(data);
 
     return this.response(200, group);
   }
